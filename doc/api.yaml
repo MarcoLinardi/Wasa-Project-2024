@@ -19,15 +19,16 @@ components:
           type: string
           readOnly: true
         photo:
-          
-          description: "Base64-encoded image data"
+          type: string
+          format: uri
+          description: "URL to the user's or group's profile photo"
+          example: "https://example.com/photos/group-photo.jpg"
     
     Chat:
       type: object
       properties:
         chatId:
           type: string
-          example: "Chat8732"
         title:
           type: string
           description: "Username or group name"
@@ -45,31 +46,53 @@ components:
           items:
             type: string
         lastMessage:
-          $ref: '#/components/schemas/Message'
+          $ref: "#/components/schemas/Message"
     
     Message:
       type: object
-      items:
-        properties: 
-          messageId:
-            type: string
-          senderId: 
-            type: string
-          content:
-            type: string
-          photoUrl:
-            type: string
-            format: uri
-            description: "URL to the photo (if the message is a photo message)"
-            example: "https://example.com/photos/message-photo.jpg"
-          timestamp:
-            type: string
-            format: date-time
-            example: "2024-11-02T16:26:24Z"
-            
+      properties: 
+        messageId:
+          type: string
+        senderId: 
+          type: string
+        content:
+          type: string
+        photoUrl:
+          type: string
+          format: uri
+          description: "URL to the photo (if the message is a photo message)"
+          example: "https://example.com/photos/message-photo.jpg"
+        timestamp:
+          type: string
+          format: date-time
+          example: "2024-11-02T16:26:24Z"
+        isForwarded:
+          type: boolean
+          default: false
+  
+  parameters:
+    ChatId:
+      schema:
+        type: string
+      required: true
+      in: path
+      name: ChatId
     
+    MsgId:
+      schema:
+        type: string
+      required: true
+      in: path
+      name: MsgId
+    
+    UserId:
+      schema:
+        type: string
+      required: true
+      in: path
+      name: UserId
 
-          
+
 paths:
   /login:
     post:
@@ -108,7 +131,7 @@ paths:
   
   /username:
     put: # Usiamo put per aggiornare le informazioni
-      tags: ["Set Username"]
+      tags: ["Username"]
       summary: Setting username
       description: |-
         Allows an user to set their username
@@ -149,12 +172,40 @@ paths:
                     type: string
                     example: "Invalid username format"
 
+  /users:
+    get:
+      tags: [Users]
+      summary: List of app users 
+      description: "Allows a user to get a list of app users"
+      operationId: listOfUsers
+      responses:
+        '200':
+          description: List of app users
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  users:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/User"
+        '400':
+          description: Invalid request parameters
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  errors:
+                    type: string
+                    example: "Invalid request"
+
   /conversations:
     get:
       tags: [My conversations]
       summary: Get the user's conversation history
-      description: |-
-        Allows a user to get a list of his conversations
+      description: "Allows a user to get a list of his conversations"
       operationId: getMyConversations
       responses:
         '200':
@@ -179,7 +230,7 @@ paths:
                     type: string
                     example: "Invalid request"
   
-  /conversations/{conversationId}:
+  /conversations/{ChatId}:
     get:
       tags: [Conversation]
       summary: Get the details of a conversation
@@ -187,13 +238,7 @@ paths:
         Allows a user to get the conversation details
       operationId: getConversation
       parameters:
-      - name: conversationId
-        in: path
-        required: true
-        description: A unique conversation ID
-        schema:
-          type: string
-          example: "Chat8732"
+        - $ref: "#/components/parameters/ChatId"
       responses:
         '200':
           description : details of conversation required
@@ -203,22 +248,24 @@ paths:
                 $ref: "#/components/schemas/Chat"
         '400':
           description: Invalid request parameters
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  errors:
+                    type: string
+                    example: "Invalid request"
   
-  /conversations/{conversationId}/sendMessage:
+  /conversations/{ChatId}/messages:
     post:
       tags: [Send message]
       summary: Allows a user to send a message
       description: |-
-        
+        gives the user the possibility to send a message
       operationId: sendMessage
       parameters:
-        - name: conversationId
-          in: path
-          required: true
-          description: The unique ID of the conversation
-          schema:
-            type: string
-            example: "Chat8732"
+        - $ref: "#/components/parameters/ChatId"
       requestBody: 
         required: true
         content:
@@ -244,7 +291,7 @@ paths:
                   errors:
                     type: string
                     example: "Invalid request"
-          
+        
         '401':
           description: Unauthorized request
           content:
@@ -254,7 +301,7 @@ paths:
                 properties:
                   errors:
                     type: string
-                    example: "User not authorized to send a message in this conversation"  
+                    example: "User not authorized to send a message in this conversation"
         
         '404':
           description: Conversation not found
@@ -266,6 +313,81 @@ paths:
                   errors:
                     type: string
                     example: "Conversation with ID 'Chat8732' not found"
+
+  /conversations/{ChatId}/messages/{MsgId}/forward:
+    post:
+      tags: [Forward message]
+      summary: Allows a user to forward a message
+      description: |-
+        gives the user the possibility to forward a message
+      operationId: forwardMessage
+      parameters:
+        - $ref: "#/components/parameters/ChatId" #ID of the conversation containing the original message
+        - $ref: "#/components/parameters/MsgId"  #ID of the original message
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                targetChatId:
+                  type: string
+                  example: "Chat8732"
+                targetUserId:
+                  type: string
+                  example: "User1234"
+              oneOf:
+                - required: ["targetChatId"]
+                - required: ["targetUserId"]
+      
+      responses:
+        '201':
+          description: message forwarded successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    $ref: "#/components/schemas/Message"
+                  isForwarded:
+                    type: boolean
+                    default: true
+        
+        '400':
+          description: Invalid request parameters
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  errors:
+                    type: string
+                    example: "Invalid request parameters."
+        
+        '401':
+          description: Unauthorized request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  errors:
+                    type: string
+                    example: "User not authorized to forward a message in this conversation."
+        
+        '404':
+          description: Conversation or user not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  errors:
+                    type: string
+                    example: "Conversation or user not found."
+
   
   
   
