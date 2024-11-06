@@ -316,10 +316,9 @@ paths:
 
   /conversations/{ChatId}/messages/{MsgId}/forward:
     post:
-      tags: [Forward message]
+      tags: [Forward]
       summary: Allows a user to forward a message
-      description: |-
-        gives the user the possibility to forward a message
+      description: gives the user the possibility to forward a message
       operationId: forwardMessage
       parameters:
         - $ref: "#/components/parameters/ChatId" #ID of the conversation containing the original message
@@ -388,7 +387,126 @@ paths:
                     type: string
                     example: "Conversation or user not found."
 
-  
+  /conversations/{ChatId}/messages/{MsgId}/reaction:
+    post:
+      tags: [Reaction]
+      summary: Allows a user to send a reaction to a message
+      description: "gives the user the possibility to react a message with emoji "
+      operationId: commentMessage
+      parameters:
+        - $ref: "#/components/parameters/ChatId" #ID of the conversation containing the message
+        - $ref: "#/components/parameters/MsgId"  #ID of the original message
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                emoji:
+                  type: string
+                  description: "A single emoji character used as a reaction"
+                  maxLength: 2
+      responses:
+        '200':
+          description: Reaction added successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Reaction added successfully"
+                  reaction:
+                    type: object
+                    properties:
+                      emoji:
+                        type: string
+                      userId:
+                        type: string
+        
+        '400':
+          description: Invalid request parameters
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  errors:
+                    type: string
+                    example: "Invalid emoji format"
+        
+        '404':
+          description: Message not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  errors:
+                    type: string
+                    example: "Message with Id: 8732 not found."
+    
+    delete:
+      tags: [Reaction]
+      summary: Allows a user to remove a reaction to a message
+      description: "Allows a user to remove a previously added emoji reaction from a message."
+      operationId: unCommentMessage
+      parameters:
+        - $ref: "#/components/parameters/ChatId" #ID of the conversation containing the message
+        - $ref: "#/components/parameters/MsgId"  #ID of the original message
+        - name: "Emoji"
+          in: query
+          required: true
+          description: "The emoji to remove as a reaction from the message"
+          schema:
+            type: string
+            maxLength: 2
+      responses:
+        '200':
+          description: Reaction removed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Reaction removed successfully"
+        
+        '400':
+          description: Invalid input or missing parameters
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Invalid emoji or message ID"
+        
+        '401':
+          description: Unauthorized request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "User not authorized to remove reaction"
+        
+        '404':
+          description: Message or reaction not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Reaction not found on the message"
   
   
   
