@@ -32,6 +32,9 @@ components:
           format: uri
           description: URL to the user's or group's profile photo
           example: "https://example.com/photos/group-photo.jpg"
+      required:
+        - userId
+        - name
     
     Chat:
       type: object
@@ -62,17 +65,17 @@ components:
           example: false
         participants:
           type: array
-          minItems: 1  # Numero minimo di messaggi
+          minItems: 1  
           maxItems: 10000
           description: List of group members
           items:
-            type: string
-            minLength: 1
-            maxLength: 10000
-            pattern: "^.*$"
-            description: Single user details
+            $ref: "#/components/schemas/User/properties/userId"
         lastMessage:
           $ref: "#/components/schemas/Message"
+      required:
+        - chatId
+        - title
+        - isGroup
     
     Message:
       type: object
@@ -85,11 +88,7 @@ components:
           pattern: "^.*$"
           description: Unique ID of a message
         senderId: 
-          type: string
-          minLength: 1
-          maxLength: 10000
-          pattern: "^.*$"
-          description: Unique ID of a user 
+          $ref: "#/components/schemas/User/properties/userId" 
         content:
           type: string
           minLength: 1
@@ -109,6 +108,45 @@ components:
           type: boolean
           default: false
           description: If true, the message was forwarded
+      required:
+        - messageId
+        - senderId
+        - content
+        - timestamp
+    
+    Group:
+      type: object
+      description: Details of a group
+      properties:
+        groupId:
+          type: string
+          minLength: 1
+          maxLength: 10000
+          pattern: "^.*$"
+          description: Unique ID of a group
+        name:
+          type: string
+          minLength: 1
+          maxLength: 20
+          pattern: "^.*$"
+          description: Group name
+        description:
+          type: string
+          minLength: 1
+          maxLength: 10000
+          pattern: "^.*$"
+          description: Group description
+        members:
+          type: array
+          minItems: 1  
+          maxItems: 10000
+          description: List of group members
+          items:
+            $ref: "#/components/schemas/User/properties/userId"
+      required:
+        - groupId
+        - name
+        - members
 
   securitySchemes:
     bearerAuth:
@@ -399,6 +437,24 @@ paths:
         
         '404':
           description: Conversation not found
+    
+    delete:
+      tags:
+        - Conversations
+      summary: Allows a user to delete a chat
+      description: deletes a conversation, especially the one specified in the path
+      operationId: deleteConversation
+      security:
+        - bearerAuth: []
+      responses:
+        '204':
+          description: Chat successfully deleted
+        
+        '401':
+          description: Unhautorized request
+        
+        '404':
+          description: Conversation not found
   
   /conversations/{ChatId}/messages:
     parameters:
@@ -652,6 +708,36 @@ paths:
         
         '404':
           description: Message or reaction not found
+  
+  /groups:
+    post:
+      tags:
+        - Group
+      summary: Allows a user to create a group
+      description: Endpoint to create a new group
+      operationId: createGroup
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Group"
+      
+      responses:
+        '201':
+          description: Group successfully created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Group'
+        
+        '400':
+          description: Invalid request
+        
+        '401':
+          description: Unauthorized request
 
   /groups/{GroupId}/members:
     parameters:
