@@ -16,9 +16,15 @@ components:
       properties:
         name:
           type: string
+          minLength: 1
+          maxLength: 20
+          pattern: "^.*$"
           description: Name of a user
         userId:
           type: string
+          minLength: 1
+          maxLength: 10000
+          pattern: "^.*$"
           description: Unique ID of a user
           readOnly: true
         photo:
