@@ -3,64 +3,97 @@ openapi: 3.0.0
 
 info: 
   title: Wasa Text
-  description: |
-    Questa API contiene le regole per
-    far si che tutto funzioni al meglio
+  description: |-
+    An API for a messaging app that allows users
+    to send, receive, and manage messages and groups.
   version: 0.0.1
   
 components:
   schemas:
     User:
       type: object
+      description: Details of a user
       properties:
         name:
           type: string
+          description: Name of a user
         userId:
           type: string
+          description: Unique ID of a user
           readOnly: true
         photo:
           type: string
           format: uri
-          description: "URL to the user's or group's profile photo"
+          description: URL to the user's or group's profile photo
           example: "https://example.com/photos/group-photo.jpg"
     
     Chat:
       type: object
+      description: Details of a chat
       properties:
         chatId:
           type: string
+          minLength: 1
+          maxLength: 10000
+          pattern: "^.*$"
+          description: Unique ID of a chat
         title:
           type: string
-          description: "Username or group name"
+          minLength: 1
+          maxLength: 20
+          pattern: "^.*$"
+          description: Username or group name
         photo:
           type: string
           format: uri
-          description: "URL to the user's or group's profile photo"
+          description: URL to the user's or group's photo
           example: "https://example.com/photos/group-photo.jpg"
         isGroup:
           type: boolean
-          description: "Indicates if the conversation is a group chat or one-on-one chat"
+          description: |- 
+            Indicates if the conversation is a group chat
+            or one-on-one chat
           example: false
         participants:
           type: array
+          minItems: 1  # Numero minimo di messaggi
+          maxItems: 10000
+          description: List of group members
           items:
             type: string
+            minLength: 1
+            maxLength: 10000
+            pattern: "^.*$"
+            description: Single user details
         lastMessage:
           $ref: "#/components/schemas/Message"
     
     Message:
       type: object
+      description: Details of a message
       properties: 
         messageId:
           type: string
+          minLength: 1
+          maxLength: 10000
+          pattern: "^.*$"
+          description: Unique ID of a message
         senderId: 
           type: string
+          minLength: 1
+          maxLength: 10000
+          pattern: "^.*$"
+          description: Unique ID of a user 
         content:
           type: string
+          minLength: 1
+          maxLength: 10000
+          pattern: "^.*$"
+          description: Content of the message
         photoUrl:
           type: string
           format: uri
-          description: "URL to the photo (if the message is a photo message)"
+          description: URL to the photo
           example: "https://example.com/photos/message-photo.jpg"
         timestamp:
           type: string
@@ -69,6 +102,13 @@ components:
         isForwarded:
           type: boolean
           default: false
+          description: If true, the message was forwarded
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: plane
   
   parameters:
     ChatId:
@@ -91,12 +131,33 @@ components:
       required: true
       in: path
       name: UserId
+    
+    GroupId:
+      schema:
+        type: string
+      required: true
+      in: path
+      name: GroupId
+
+tags:
+  - name: User
+    description: Operazioni relative agli utenti
+  
+  - name: Conversations
+  
+  - name: Message
+    description: Operazioni relative ai messaggi
+
+  - name: Group
+    description: Operazioni relative ai gruppi
+
 
 
 paths:
   /login:
     post:
-      tags: ["Login"]
+      tags:
+        - User
       summary: Logs in the user
       description: |-
         If the user does not exist, it will be created,
@@ -113,7 +174,7 @@ paths:
                 name:
                   type: string
                   example: "user123"
-                  pattern: '^.*?$'
+                  pattern: "^.*?$"
                   minLength: 3
                   maxLength: 16
         required: true
@@ -129,13 +190,15 @@ paths:
                     type: string
                     example: "abcdef012345"
   
-  /username:
-    put: # Usiamo put per aggiornare le informazioni
-      tags: ["Username"]
-      summary: Setting username
-      description: |-
-        Allows an user to set their username
+  /user/name:
+    patch: 
+      tags: 
+        - User
+      summary: Allows a user to set their username
+      description: Allows an user to set their username
       operationId: updateUsername
+      security:
+        - bearerAuth: []
       requestBody: 
         description: Username details
         content:
@@ -171,13 +234,60 @@ paths:
                   error:
                     type: string
                     example: "Invalid username format"
+        
+        '401':
+          description: Unauthorized request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "User not authorized to send a message in this conversation"
+        
+        '404':
+          description: Conversation not found
+  
+  /user/photo:
+    patch:
+      tags: 
+        - User
+      summary: Allows a user to set their photo
+      description: gives the possibility to update a group photo
+      operationId: setMyPhoto
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                photo:
+                  type: string
+                  format: binary
+                  description: The image file to update
+      responses:
+        '200':
+          description: Photo updated successfully
+        
+        '400':
+          description: Invalid request
+        
+        '401':
+          description: Unauthorized request 
 
   /users:
     get:
-      tags: [Users]
-      summary: List of app users 
+      tags: 
+        - User
+      summary: Allows a user to get the list of all users of the app 
       description: "Allows a user to get a list of app users"
       operationId: listOfUsers
+      security:
+        - bearerAuth: []
       responses:
         '200':
           description: List of app users
@@ -197,16 +307,33 @@ paths:
               schema:
                 type: object
                 properties:
-                  errors:
+                  error:
                     type: string
                     example: "Invalid request"
+        
+        '401':
+          description: Unauthorized request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "User not authorized to send a message in this conversation"
+        
+        '404':
+          description: Conversation not found
 
   /conversations:
     get:
-      tags: [My conversations]
-      summary: Get the user's conversation history
-      description: "Allows a user to get a list of his conversations"
+      tags: 
+        - Conversations
+      summary: Allows a user to get a list of his conversations
+      description: Allows a user to get a list of his conversations
       operationId: getMyConversations
+      security:
+        - bearerAuth: []
       responses:
         '200':
           description: List of user's conversations
@@ -226,19 +353,22 @@ paths:
               schema:
                 type: object
                 properties:
-                  errors:
+                  error:
                     type: string
                     example: "Invalid request"
   
   /conversations/{ChatId}:
+    parameters:
+      - $ref: "#/components/parameters/ChatId"
+    
     get:
-      tags: [Conversation]
-      summary: Get the details of a conversation
-      description: |-
-        Allows a user to get the conversation details
+      tags: 
+        - Conversations
+      summary: Allows a user to get the details of a single conversation
+      description: Allows a user to get the conversation details
       operationId: getConversation
-      parameters:
-        - $ref: "#/components/parameters/ChatId"
+      security:
+        - bearerAuth: []
       responses:
         '200':
           description : details of conversation required
@@ -246,26 +376,36 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Chat"
+        
         '400':
           description: Invalid request parameters
+        
+        '401':
+          description: Unauthorized request
           content:
             application/json:
               schema:
                 type: object
                 properties:
-                  errors:
+                  error:
                     type: string
-                    example: "Invalid request"
+                    example: "User not authorized to send a message in this conversation"
+        
+        '404':
+          description: Conversation not found
   
   /conversations/{ChatId}/messages:
+    parameters:
+      - $ref: "#/components/parameters/ChatId"
+    
     post:
-      tags: [Send message]
+      tags: 
+        - Message
       summary: Allows a user to send a message
-      description: |-
-        gives the user the possibility to send a message
+      description: gives the user the possibility to send a message
       operationId: sendMessage
-      parameters:
-        - $ref: "#/components/parameters/ChatId"
+      security:
+        - bearerAuth: []
       requestBody: 
         required: true
         content:
@@ -279,18 +419,15 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Message"
+                type: object
+                properties:
+                  users:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Message"
         
         '400':
           description: Invalid request parameters
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  errors:
-                    type: string
-                    example: "Invalid request"
         
         '401':
           description: Unauthorized request
@@ -299,30 +436,26 @@ paths:
               schema:
                 type: object
                 properties:
-                  errors:
+                  error:
                     type: string
                     example: "User not authorized to send a message in this conversation"
         
         '404':
           description: Conversation not found
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  errors:
-                    type: string
-                    example: "Conversation with ID 'Chat8732' not found"
 
   /conversations/{ChatId}/messages/{MsgId}/forward:
+    parameters:
+      - $ref: "#/components/parameters/ChatId" #ID of the conversation containing the original message
+      - $ref: "#/components/parameters/MsgId"  #ID of the original message
+    
     post:
-      tags: [Forward]
+      tags: 
+        - Message
       summary: Allows a user to forward a message
       description: gives the user the possibility to forward a message
       operationId: forwardMessage
-      parameters:
-        - $ref: "#/components/parameters/ChatId" #ID of the conversation containing the original message
-        - $ref: "#/components/parameters/MsgId"  #ID of the original message
+      security:
+        - bearerAuth: []
       requestBody:
         required: true
         content:
@@ -356,14 +489,6 @@ paths:
         
         '400':
           description: Invalid request parameters
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  errors:
-                    type: string
-                    example: "Invalid request parameters."
         
         '401':
           description: Unauthorized request
@@ -372,30 +497,26 @@ paths:
               schema:
                 type: object
                 properties:
-                  errors:
+                  error:
                     type: string
                     example: "User not authorized to forward a message in this conversation."
         
         '404':
           description: Conversation or user not found
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  errors:
-                    type: string
-                    example: "Conversation or user not found."
 
   /conversations/{ChatId}/messages/{MsgId}/reaction:
+    parameters:
+      - $ref: "#/components/parameters/ChatId" #ID of the conversation containing the message
+      - $ref: "#/components/parameters/MsgId"  #ID of the original message
+    
     post:
-      tags: [Reaction]
+      tags: 
+        - Message
       summary: Allows a user to send a reaction to a message
-      description: "gives the user the possibility to react a message with emoji "
+      description: gives a user the possibility to react a message with emoji
       operationId: commentMessage
-      parameters:
-        - $ref: "#/components/parameters/ChatId" #ID of the conversation containing the message
-        - $ref: "#/components/parameters/MsgId"  #ID of the original message
+      security:
+        - bearerAuth: []
       requestBody:
         required: true
         content:
@@ -405,8 +526,9 @@ paths:
               properties:
                 emoji:
                   type: string
-                  description: "A single emoji character used as a reaction"
+                  description: A single emoji character used as a reaction
                   maxLength: 2
+      
       responses:
         '200':
           description: Reaction added successfully
@@ -415,9 +537,6 @@ paths:
               schema:
                 type: object
                 properties:
-                  message:
-                    type: string
-                    example: "Reaction added successfully"
                   reaction:
                     type: object
                     properties:
@@ -425,55 +544,44 @@ paths:
                         type: string
                       userId:
                         type: string
+                
         
         '400':
           description: Invalid request parameters
+        
+        '401':
+          description: Unauthorized request
           content:
             application/json:
               schema:
                 type: object
                 properties:
-                  errors:
+                  error:
                     type: string
-                    example: "Invalid emoji format"
+                    example: "User not authorized to add reaction"
         
         '404':
           description: Message not found
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  errors:
-                    type: string
-                    example: "Message with Id: 8732 not found."
     
     delete:
-      tags: [Reaction]
+      tags: 
+        - Message
       summary: Allows a user to remove a reaction to a message
       description: "Allows a user to remove a previously added emoji reaction from a message."
       operationId: unCommentMessage
+      security:
+        - bearerAuth: []
       parameters:
-        - $ref: "#/components/parameters/ChatId" #ID of the conversation containing the message
-        - $ref: "#/components/parameters/MsgId"  #ID of the original message
         - name: "Emoji"
           in: query
           required: true
-          description: "The emoji to remove as a reaction from the message"
+          description: The emoji to remove as a reaction from the message
           schema:
             type: string
             maxLength: 2
       responses:
         '200':
           description: Reaction removed successfully
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    example: "Reaction removed successfully"
         
         '400':
           description: Invalid input or missing parameters
@@ -499,6 +607,34 @@ paths:
         
         '404':
           description: Message or reaction not found
+  
+  /conversations/{ChatId}/messages/{MsgId}:
+    parameters:
+      - $ref: "#/components/parameters/ChatId" #ID of the conversation containing the message
+      - $ref: "#/components/parameters/MsgId"  #ID of the message to remove
+    
+    delete:
+      tags: 
+        - Message
+      summary: Allows a user to delete a message
+      description: gives the user the possibility to delete a message
+      operationId: deleteMessage
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Message deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Message deleted successfully"
+        
+        '401':
+          description: Unauthorized request
           content:
             application/json:
               schema:
@@ -506,7 +642,203 @@ paths:
                 properties:
                   error:
                     type: string
-                    example: "Reaction not found on the message"
+                    example: "User not authorized to remove reaction"
+        
+        '404':
+          description: Message or reaction not found
+
+  /groups/{GroupId}/members:
+    parameters:
+      - $ref: "#/components/parameters/GroupId" #ID of the group to which the user is being added
+    post:
+      tags: 
+        - Group
+      summary: Allows a user to add another user to group
+      description: gives a user the possibility to add a user to group
+      operationId: addToGroup
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                UserId:
+                  type: string
+                  description: "ID of the user to be added to the group"
+      
+      responses:
+        '201':
+          description: User added correctly
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    $ref: "#/components/schemas/User"
+        
+        '400':
+          description: Invalid request or user already in group
+        
+        '401':
+          description: Unauthorized request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "User not authorized to add a user to group"
+        
+        '404':
+          description: Message or reaction not found
+  
+  /groups/{GroupId}/members/{UserId}:
+    parameters:
+      - $ref: "#/components/parameters/GroupId"
+      - $ref: "#/components/parameters/UserId"
+    delete:
+      tags: 
+        - Group
+      summary: Allows a user to leave a group
+      description: gives the possibility to leave a group
+      operationId: leaveGroup
+      responses:
+        '200':
+          description: the user has left the group
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    $ref: "#/components/schemas/User"
+        
+        '400':
+          description: Invalid request
+        
+        
+        '401':
+          description: Unauthorized request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "User not authorized to add a user to group"
+        
+        '404':
+          description: Group or user not found
+
+  /groups/{GroupId}/name:
+    parameters:
+      - $ref: "#/components/parameters/GroupId"
+    
+    patch:
+      tags: 
+        - Group
+      summary: Allows a user to give a name a group
+      description: gives the possibility a user to rename a group
+      operationId: setGroupName
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  description: The new name for the group
+        
+      responses:
+        '200':
+          description: Group name updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  name:
+                    type: string
+                    description: The new name for the group
+        
+        '400':
+          description: "Invalid input"
+        
+        '401':
+          description: Unauthorized request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "User not authorized to update group name"
+        
+        '404':
+          description: "Group not found"
+  
+  /groups/{GroupId}/photo:
+    parameters:
+      - $ref: "#/components/parameters/GroupId"
+    
+    patch:
+      tags: 
+        - Group
+      summary: "Allows a user to set or updated group photo"
+      description: Allows the user to update the group photo
+      operationId: setGroupPhoto
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                photo:
+                  type: string
+                  format: binary
+                  description: The image file to update
+      
+      responses:
+        '200':
+          description: Photo updated successfully
+        
+        '400':
+          description: Invalid request
+        
+        '401':
+          description: Unauthorized request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "User not authorized to update group photo"
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
   
   
   
