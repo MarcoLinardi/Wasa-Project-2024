@@ -21,6 +21,7 @@ components:
           pattern: "^.*$"
           example: "Mario"
           description: Name of a user
+
         userId:
           type: string
           minLength: 1
@@ -29,6 +30,7 @@ components:
           example: "Mario23"
           description: Unique ID of a user
           readOnly: true
+        
         photo:
           type: string
           format: binary
@@ -36,8 +38,7 @@ components:
           example: "iVBORw0KGgoAAAANSUhEUgAAAAUA..."
           minLength: 0
           maxLength: 1374389 #equivalente di 1MB di foto
-
-          
+    
     Chat:
       type: object
       description: Details of a chat
@@ -76,7 +77,6 @@ components:
             $ref: "#/components/schemas/User/properties/userId"
         lastMessage:
           $ref: "#/components/schemas/Message"
-
     
     Message:
       type: object
@@ -88,8 +88,10 @@ components:
           maximum: 10000
           example: 2
           description: Unique ID of a message
+        
         senderId: 
           $ref: "#/components/schemas/User/properties/userId" 
+        
         content:
           type: string
           minLength: 1
@@ -97,6 +99,7 @@ components:
           pattern: "^.*$"
           example: "Hi, i'm marco"
           description: Content of the message
+        
         photo:
           type: string
           format: binary
@@ -104,6 +107,7 @@ components:
           example: "iVBORw0KGgoAAAANSUhEUgAAAAUA..."
           minLength: 0
           maxLength: 2748778
+        
         status:
           type: string
           minLength: 1
@@ -111,12 +115,15 @@ components:
           pattern: "^.*$"
           description: Details of the status
           example: "Sent"
+        
         timestamp:
           type: string
           format: date-time
-          example: "2024-11-02T16:26:24Z"
           minLength: 0
           maxLength: 22
+          example: "2024-11-02T16:26:24Z"
+          description: Details about date and time
+        
         isForwarded:
           type: boolean
           default: false
@@ -132,6 +139,7 @@ components:
           minimum: 1
           maximum: 10000
           description: Unique ID of a group
+
         name:
           type: string
           minLength: 1
@@ -139,6 +147,7 @@ components:
           pattern: "^.*$"
           example: "football"
           description: Group name
+        
         description:
           type: string
           minLength: 1
@@ -146,6 +155,7 @@ components:
           pattern: "^.*$"
           example: "we find ten people!"
           description: Group description
+        
         members:
           type: array
           minItems: 1  
@@ -166,7 +176,7 @@ components:
         type: integer
         minimum: 1
         maximum: 10000
-        description: Unique chat id
+      description: Unique chat id
       required: true
       in: path
       name: ChatId
@@ -176,7 +186,7 @@ components:
         type: integer
         minimum: 1
         maximum: 10000
-        description: Unique msg id
+      description: Unique msg id
       required: true
       in: path
       name: MsgId
@@ -188,7 +198,7 @@ components:
         example: "mario234"
         minLength: 1
         maxLength: 10000
-        description: Unique user id
+      description: Unique user id
       required: true
       in: path
       name: UserId
@@ -198,7 +208,7 @@ components:
         type: integer
         minimum: 1
         maximum: 10000
-        description: Unique group id
+      description: Unique group id
       required: true
       in: path
       name: GroupId
@@ -235,13 +245,10 @@ paths:
           application/json:
             schema:
               type: object
+              description: Name of user 
               properties:
                 name:
-                  type: string
-                  example: "user123"
-                  pattern: "^.*?$"
-                  minLength: 3
-                  maxLength: 16
+                  $ref: "#/components/schemas/User/properties/name"
         required: true
       responses:
         '201':
@@ -250,9 +257,11 @@ paths:
             application/json:
               schema:
                 type: object
+                description: Return a identifier
                 properties:
                   identifier:
                     type: string
+                    description: identifier
                     example: "abcdef012345"
   
   /user/name:
@@ -267,16 +276,13 @@ paths:
       requestBody: 
         description: Username details
         content:
-          application/json:
+          application/json-patch+json:
             schema:
               type: object
+              description: New username
               properties:
                 newName:
-                  type: string
-                  example: "user123"
-                  pattern: '^.*?$'
-                  minLength: 3
-                  maxLength: 16
+                  $ref: "#/components/schemas/User/properties/name"
         required: true
       responses:
         '200':
@@ -285,19 +291,23 @@ paths:
             application/json:
               schema:
                 type: object
+                description: Schema of success
                 properties:
-                  message:
+                  success:
                     type: string
-                    example: "Username updated successfully"
+                    description: Message of success
+                    example: "Username changed successfully"
         '400':
           description: Invalid username format or other errors
           content:
             application/json:
               schema:
                 type: object
+                description: Schema of error
                 properties:
                   error:
                     type: string
+                    description: Message of error
                     example: "Invalid username format"
         
         '401':
@@ -306,9 +316,11 @@ paths:
             application/json:
               schema:
                 type: object
+                description: Schema of error
                 properties:
                   error:
                     type: string
+                    description: Message of error
                     example: "User not authorized to send a message in this conversation"
         
         '404':
@@ -546,19 +558,15 @@ paths:
               type: object
               properties:
                 status:
-                  type: string
-                  enum: ["received"]
-                  example: "received"
-              required:
-                - status
+                  $ref: "#/components/schemas/Message/properties/status"
       responses:
-        200:
+        '200':
           description: Message status updated successfully
         
-        404:
+        '404':
           description: Message or status not found
         
-        400:
+        '400':
           description: Invalid request
   
   /conversations/{ChatId}/messages/{MsgId}/read:
@@ -579,14 +587,13 @@ paths:
               type: object
               properties:
                 status:
-                  type: string
-                  enum: ["read"]
-                  example: "read"
+                  $ref: "#/components/schemas/Message/properties/status"
+    
       responses:
-        200:
+        '200':
           description: Reading status updated successfully
         
-        404:
+        '404':
           description: Message or status not found
 
   /conversations/{ChatId}/messages/{MsgId}/forward:
@@ -612,12 +619,7 @@ paths:
                 targetChatId:
                   type: integer
                   example: 3633
-                targetUserId:
-                  type: string
-                  example: "User1234"
-              oneOf:
-                - required: ["targetChatId"]
-                - required: ["targetUserId"]
+                  description: ID of the target chat where the message will be forwarded.
       
       responses:
         '201':
@@ -776,7 +778,7 @@ paths:
               schema:
                 type: object
                 properties:
-                  message:
+                  success:
                     type: string
                     example: "Message deleted successfully"
         
