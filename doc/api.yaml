@@ -6,7 +6,7 @@ info:
   description: |-
     An API for a messaging app that allows users
     to send, receive, and manage messages and groups.
-  version: 0.0.1
+  version: 0.0.23
   
 components:
   schemas:
@@ -19,47 +19,51 @@ components:
           minLength: 1
           maxLength: 20
           pattern: "^.*$"
+          example: "Mario"
           description: Name of a user
         userId:
           type: string
           minLength: 1
           maxLength: 10000
           pattern: "^.*$"
+          example: "Mario23"
           description: Unique ID of a user
           readOnly: true
         photo:
           type: string
-          format: uri
-          description: URL to the user's or group's profile photo
-          example: "https://example.com/photos/group-photo.jpg"
-      required:
-        - userId
-        - name
-    
+          format: binary
+          description: The photo is a binary file in the payload
+          example: "iVBORw0KGgoAAAANSUhEUgAAAAUA..."
+          minLength: 0
+          maxLength: 1374389 #equivalente di 1MB di foto
+
+          
     Chat:
       type: object
       description: Details of a chat
       properties:
         chatId:
-          type: string
-          minLength: 1
-          maxLength: 10000
-          pattern: "^.*$"
+          type: integer
+          minimum: 1
+          maximum: 10000
           description: Unique ID of a chat
         title:
           type: string
           minLength: 1
           maxLength: 20
           pattern: "^.*$"
+          example: "Chat fami"
           description: Username or group name
         photo:
           type: string
-          format: uri
-          description: URL to the user's or group's photo
-          example: "https://example.com/photos/group-photo.jpg"
+          format: binary
+          description: The photo is a binary file, it's the user or group photo
+          example: "iVBORw0KGgoAAAANSUhEUgAAAAUA..."
+          minLength: 0
+          maxLength: 1374389 #equivalente di 1MB di foto
         isGroup:
           type: boolean
-          description: |- 
+          description: |
             Indicates if the conversation is a group chat
             or one-on-one chat
           example: false
@@ -72,20 +76,17 @@ components:
             $ref: "#/components/schemas/User/properties/userId"
         lastMessage:
           $ref: "#/components/schemas/Message"
-      required:
-        - chatId
-        - title
-        - isGroup
+
     
     Message:
       type: object
       description: Details of a message
       properties: 
         messageId:
-          type: string
-          minLength: 1
-          maxLength: 10000
-          pattern: "^.*$"
+          type: integer
+          minimum: 0
+          maximum: 10000
+          example: 2
           description: Unique ID of a message
         senderId: 
           $ref: "#/components/schemas/User/properties/userId" 
@@ -94,12 +95,15 @@ components:
           minLength: 1
           maxLength: 10000
           pattern: "^.*$"
+          example: "Hi, i'm marco"
           description: Content of the message
-        photoUrl:
+        photo:
           type: string
-          format: uri
-          description: URL to the photo
-          example: "https://example.com/photos/message-photo.jpg"
+          format: binary
+          description: The photo is a binary file,
+          example: "iVBORw0KGgoAAAANSUhEUgAAAAUA..."
+          minLength: 0
+          maxLength: 2748778
         status:
           type: string
           minLength: 1
@@ -111,37 +115,36 @@ components:
           type: string
           format: date-time
           example: "2024-11-02T16:26:24Z"
+          minLength: 0
+          maxLength: 22
         isForwarded:
           type: boolean
           default: false
           description: If true, the message was forwarded
-      required:
-        - messageId
-        - senderId
-        - content
-        - timestamp
+          example: true
     
     Group:
       type: object
       description: Details of a group
       properties:
         groupId:
-          type: string
-          minLength: 1
-          maxLength: 10000
-          pattern: "^.*$"
+          type: integer
+          minimum: 1
+          maximum: 10000
           description: Unique ID of a group
         name:
           type: string
           minLength: 1
           maxLength: 20
           pattern: "^.*$"
+          example: "football"
           description: Group name
         description:
           type: string
           minLength: 1
           maxLength: 10000
           pattern: "^.*$"
+          example: "we find ten people!"
           description: Group description
         members:
           type: array
@@ -150,10 +153,6 @@ components:
           description: List of group members
           items:
             $ref: "#/components/schemas/User/properties/userId"
-      required:
-        - groupId
-        - name
-        - members
 
   securitySchemes:
     bearerAuth:
@@ -164,14 +163,20 @@ components:
   parameters:
     ChatId:
       schema:
-        type: string
+        type: integer
+        minimum: 1
+        maximum: 10000
+        description: Unique chat id
       required: true
       in: path
       name: ChatId
     
     MsgId:
       schema:
-        type: string
+        type: integer
+        minimum: 1
+        maximum: 10000
+        description: Unique msg id
       required: true
       in: path
       name: MsgId
@@ -179,13 +184,21 @@ components:
     UserId:
       schema:
         type: string
+        pattern: "^.*$"
+        example: "mario234"
+        minLength: 1
+        maxLength: 10000
+        description: Unique user id
       required: true
       in: path
       name: UserId
     
     GroupId:
       schema:
-        type: string
+        type: integer
+        minimum: 1
+        maximum: 10000
+        description: Unique group id
       required: true
       in: path
       name: GroupId
@@ -195,6 +208,7 @@ tags:
     description: Operazioni relative agli utenti
   
   - name: Conversations
+    description: Operazioni relative alle chat
   
   - name: Message
     description: Operazioni relative ai messaggi
@@ -596,8 +610,8 @@ paths:
               type: object
               properties:
                 targetChatId:
-                  type: string
-                  example: "Chat8732"
+                  type: integer
+                  example: 3633
                 targetUserId:
                   type: string
                   example: "User1234"
@@ -659,6 +673,7 @@ paths:
                 emoji:
                   type: string
                   description: A single emoji character used as a reaction
+                  example: "✌️"
                   maxLength: 2
       
       responses:
@@ -922,6 +937,7 @@ paths:
                 name:
                   type: string
                   description: The new name for the group
+                  example: "Ferragosto 2025"
         
       responses:
         '200':
@@ -972,9 +988,7 @@ paths:
               type: object
               properties:
                 photo:
-                  type: string
-                  format: binary
-                  description: The image file to update
+                  $ref: "#/components/schemas/User/properties/photo"
       
       responses:
         '200':
@@ -993,20 +1007,6 @@ paths:
                   error:
                     type: string
                     example: "User not authorized to update group photo"
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
   
   
   
