@@ -48,6 +48,7 @@ components:
           minimum: 1
           maximum: 10000
           description: Unique ID of a chat
+        
         title:
           type: string
           minLength: 1
@@ -55,6 +56,7 @@ components:
           pattern: "^.*$"
           example: "Chat fami"
           description: Username or group name
+        
         photo:
           type: string
           format: binary
@@ -62,12 +64,14 @@ components:
           example: "iVBORw0KGgoAAAANSUhEUgAAAAUA..."
           minLength: 0
           maxLength: 1374389 #equivalente di 1MB di foto
+        
         isGroup:
           type: boolean
           description: |
             Indicates if the conversation is a group chat
             or one-on-one chat
           example: false
+        
         participants:
           type: array
           minItems: 1  
@@ -75,6 +79,7 @@ components:
           description: List of group members
           items:
             $ref: "#/components/schemas/User/properties/userId"
+        
         lastMessage:
           $ref: "#/components/schemas/Message"
     
@@ -341,11 +346,10 @@ paths:
           multipart/form-data:
             schema:
               type: object
+              description: Schema of photo
               properties:
                 photo:
-                  type: string
-                  format: binary
-                  description: The image file to update
+                  $ref: "#/components/schemas/Chat/properties/photo"
       responses:
         '200':
           description: Photo updated successfully
@@ -372,9 +376,13 @@ paths:
             application/json:
               schema:
                 type: object
+                description: Schema of array containing all user's app
                 properties:
                   users:
                     type: array
+                    minItems: 0
+                    maxItems: 2000
+                    description: Array containing all user's app
                     items:
                       $ref: "#/components/schemas/User"
         '400':
@@ -383,9 +391,11 @@ paths:
             application/json:
               schema:
                 type: object
+                description: Schema of error
                 properties:
                   error:
                     type: string
+                    description: Message of error
                     example: "Invalid request"
         
         '401':
@@ -394,9 +404,11 @@ paths:
             application/json:
               schema:
                 type: object
+                description: Schema of error
                 properties:
                   error:
                     type: string
+                    description: Message of error
                     example: "User not authorized to send a message in this conversation"
         
         '404':
@@ -418,20 +430,27 @@ paths:
             application/json:
               schema:
                 type: object
+                description: Schema of chat's list
                 properties:
                   conversations:
                     type: array
+                    minItems: 0
+                    maxItems: 2000
+                    description: Array containing all the chats
                     items:
                       $ref: "#/components/schemas/Chat"
+      
         '400':
           description: Invalid request parameters
           content:
             application/json:
               schema:
                 type: object
+                description: Schema of error
                 properties:
                   error:
                     type: string
+                    description: Message of error
                     example: "Invalid request"
   
   /conversations/{ChatId}:
@@ -463,9 +482,11 @@ paths:
             application/json:
               schema:
                 type: object
+                description: Schema of error
                 properties:
                   error:
                     type: string
+                    description: Message of error
                     example: "User not authorized to send a message in this conversation"
         
         '404':
@@ -515,6 +536,7 @@ paths:
             application/json:
               schema:
                 type: object
+                description: Schema of success
                 properties:
                   message:
                     $ref: "#/components/schemas/Message"
@@ -528,9 +550,11 @@ paths:
             application/json:
               schema:
                 type: object
+                description: Schema of error
                 properties:
                   error:
                     type: string
+                    description: Message of error
                     example: "User not authorized to send a message in this conversation"
         
         '404':
@@ -556,6 +580,7 @@ paths:
           application/json:
             schema:
               type: object
+              description: Schema of status of message
               properties:
                 status:
                   $ref: "#/components/schemas/Message/properties/status"
@@ -585,6 +610,7 @@ paths:
           application/json:
             schema:
               type: object
+              description: Schema of status of message
               properties:
                 status:
                   $ref: "#/components/schemas/Message/properties/status"
@@ -615,11 +641,10 @@ paths:
           application/json:
             schema:
               type: object
+              description: Schema of chat
               properties:
                 targetChatId:
-                  type: integer
-                  example: 3633
-                  description: ID of the target chat where the message will be forwarded.
+                  $ref: "#/components/schemas/Chat/properties/chatId"
       
       responses:
         '201':
@@ -628,11 +653,13 @@ paths:
             application/json:
               schema:
                 type: object
+                description: Schema of success
                 properties:
                   message:
                     $ref: "#/components/schemas/Message"
                   isForwarded:
                     type: boolean
+                    description: Status of message
                     default: true
         
         '400':
@@ -644,9 +671,11 @@ paths:
             application/json:
               schema:
                 type: object
+                description: Schema of error
                 properties:
                   error:
                     type: string
+                    description: Message of error
                     example: "User not authorized to forward a message in this conversation."
         
         '404':
@@ -671,12 +700,15 @@ paths:
           application/json:
             schema:
               type: object
+              description: Schema of reaction
               properties:
                 emoji:
                   type: string
                   description: A single emoji character used as a reaction
                   example: "✌️"
+                  minLength: 1
                   maxLength: 2
+                  pattern: "^[\u0000-\uFFFF]+$"
       
       responses:
         '200':
@@ -685,15 +717,20 @@ paths:
             application/json:
               schema:
                 type: object
+                description: Message of success
                 properties:
                   reaction:
                     type: object
+                    description: Schema of reaction
                     properties:
                       emoji:
                         type: string
+                        minLength: 1
+                        maxLength: 2
+                        pattern: "^[\u0000-\uFFFF]+$"
+                        description: Reaction
                       userId:
-                        type: string
-                
+                        $ref: "#/components/schemas/User/properties/userId"        
         
         '400':
           description: Invalid request parameters
@@ -704,9 +741,11 @@ paths:
             application/json:
               schema:
                 type: object
+                description: Schema of error
                 properties:
                   error:
                     type: string
+                    description: Message of error
                     example: "User not authorized to add reaction"
         
         '404':
@@ -727,7 +766,10 @@ paths:
           description: The emoji to remove as a reaction from the message
           schema:
             type: string
+            minLength: 1
             maxLength: 2
+            pattern: "^[\u0000-\uFFFF]+$"
+            
       responses:
         '200':
           description: Reaction removed successfully
@@ -738,9 +780,11 @@ paths:
             application/json:
               schema:
                 type: object
+                description: Schema of error
                 properties:
                   error:
                     type: string
+                    description: Message of error
                     example: "Invalid emoji or message ID"
         
         '401':
@@ -749,9 +793,11 @@ paths:
             application/json:
               schema:
                 type: object
+                description: Schema of error
                 properties:
                   error:
                     type: string
+                    description: Message of error
                     example: "User not authorized to remove reaction"
         
         '404':
@@ -770,6 +816,7 @@ paths:
       operationId: deleteMessage
       security:
         - bearerAuth: []
+
       responses:
         '200':
           description: Message deleted successfully
@@ -777,9 +824,11 @@ paths:
             application/json:
               schema:
                 type: object
+                description: Schema of success
                 properties:
                   success:
                     type: string
+                    description: Message of success
                     example: "Message deleted successfully"
         
         '401':
@@ -788,9 +837,11 @@ paths:
             application/json:
               schema:
                 type: object
+                description: Schema of error
                 properties:
                   error:
                     type: string
+                    description: Message of error
                     example: "User not authorized to remove reaction"
         
         '404':
@@ -843,10 +894,10 @@ paths:
           application/json:
             schema:
               type: object
+              description: Schema of added user
               properties:
                 UserId:
-                  type: string
-                  description: "ID of the user to be added to the group"
+                  $ref: "#/components/schemas/User/properties/userId"
       
       responses:
         '201':
@@ -855,9 +906,10 @@ paths:
             application/json:
               schema:
                 type: object
+                description: Schema of error
                 properties:
                   user:
-                    $ref: "#/components/schemas/User"
+                    $ref: "#/components/schemas/User/properties/name"
         
         '400':
           description: Invalid request or user already in group
@@ -868,9 +920,11 @@ paths:
             application/json:
               schema:
                 type: object
+                description: Schema of error
                 properties:
                   error:
                     type: string
+                    description: Message of error
                     example: "User not authorized to add a user to group"
         
         '404':
@@ -888,6 +942,7 @@ paths:
       operationId: leaveGroup
       security:
         - bearerAuth: []
+
       responses:
         '200':
           description: the user has left the group
@@ -895,9 +950,10 @@ paths:
             application/json:
               schema:
                 type: object
+                description: Schema of error
                 properties:
                   user:
-                    $ref: "#/components/schemas/User"
+                    $ref: "#/components/schemas/User/properties/name"
         
         '400':
           description: Invalid request
@@ -909,9 +965,11 @@ paths:
             application/json:
               schema:
                 type: object
+                description: Schema of error
                 properties:
                   error:
                     type: string
+                    description: Message of error
                     example: "User not authorized to add a user to group"
         
         '404':
@@ -935,11 +993,10 @@ paths:
           application/json:
             schema:
               type: object
+              description: Shema of group name
               properties:
                 name:
-                  type: string
-                  description: The new name for the group
-                  example: "Ferragosto 2025"
+                  $ref: "#/components/schemas/Group/properties/name"
         
       responses:
         '200':
@@ -948,6 +1005,7 @@ paths:
             application/json:
               schema:
                 type: object
+                description: Schema of success
                 properties:
                   name:
                     type: string
@@ -962,9 +1020,11 @@ paths:
             application/json:
               schema:
                 type: object
+                description: Schema of error
                 properties:
                   error:
                     type: string
+                    description: Message of error
                     example: "User not authorized to update group name"
         
         '404':
@@ -988,6 +1048,7 @@ paths:
           multipart/form-data:
             schema:
               type: object
+              description: Schema of photo
               properties:
                 photo:
                   $ref: "#/components/schemas/User/properties/photo"
@@ -1005,9 +1066,11 @@ paths:
             application/json:
               schema:
                 type: object
+                description: Schema of error
                 properties:
                   error:
                     type: string
+                    description: Message of error
                     example: "User not authorized to update group photo"
   
   
