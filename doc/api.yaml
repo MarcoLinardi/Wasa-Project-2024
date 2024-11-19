@@ -275,7 +275,7 @@ paths:
         - User
       summary: Allows a user to set their username
       description: Allows an user to set their username
-      operationId: updateUsername
+      operationId: setMyUserName
       security:
         - bearerAuth: []
       requestBody: 
@@ -353,6 +353,14 @@ paths:
       responses:
         '200':
           description: Photo updated successfully
+          content: 
+            application/json:
+              schema:
+                type: object
+                description: Schema of photo
+                properties:
+                  photo:
+                    $ref: "#/components/schemas/Chat/properties/photo"
         
         '400':
           description: Invalid request
@@ -587,6 +595,14 @@ paths:
       responses:
         '200':
           description: Message status updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                description: Schema of status of message
+                properties:
+                  status:
+                    $ref: "#/components/schemas/Message/properties/status"
         
         '404':
           description: Message or status not found
@@ -618,6 +634,14 @@ paths:
       responses:
         '200':
           description: Reading status updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                description: Schema of status of message
+                properties:
+                  status:
+                    $ref: "#/components/schemas/Message/properties/status"
         
         '404':
           description: Message or status not found
@@ -756,7 +780,7 @@ paths:
         - Message
       summary: Allows a user to remove a reaction to a message
       description: "Allows a user to remove a previously added emoji reaction from a message."
-      operationId: unCommentMessage
+      operationId: uncommentMessage
       security:
         - bearerAuth: []
       parameters:
@@ -771,7 +795,7 @@ paths:
             pattern: "^[\u0000-\uFFFF]+$"
             
       responses:
-        '200':
+        '204':
           description: Reaction removed successfully
         
         '400':
@@ -818,18 +842,8 @@ paths:
         - bearerAuth: []
 
       responses:
-        '200':
+        '204':
           description: Message deleted successfully
-          content:
-            application/json:
-              schema:
-                type: object
-                description: Schema of success
-                properties:
-                  success:
-                    type: string
-                    description: Message of success
-                    example: "Message deleted successfully"
         
         '401':
           description: Unauthorized request
@@ -1056,6 +1070,14 @@ paths:
       responses:
         '200':
           description: Photo updated successfully
+          content:
+            multipart/form-data:
+              schema:
+                type: object
+                description: Schema of photo
+                properties:
+                  photo:
+                    $ref: "#/components/schemas/User/properties/photo"
         
         '400':
           description: Invalid request
@@ -1072,7 +1094,3 @@ paths:
                     type: string
                     description: Message of error
                     example: "User not authorized to update group photo"
-  
-  
-  
-  
