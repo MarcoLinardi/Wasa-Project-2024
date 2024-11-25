@@ -1,3 +1,1 @@
-# Programmazione-Web
-
-Progetto Wasa 2024/2025
+Repo for WasaText project
