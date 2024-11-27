@@ -49,12 +49,12 @@ components:
           maximum: 10000
           description: Unique ID of a chat
         
-        title:
+        name:
           type: string
           minLength: 1
           maxLength: 20
           pattern: "^.*$"
-          example: "Chat fami"
+          example: "Mario"
           description: Username or group name
         
         photo:
@@ -83,6 +83,10 @@ components:
         lastMessage:
           $ref: "#/components/schemas/Message"
     
+      required:
+        - name
+        - isGroup
+    
     Message:
       type: object
       description: Details of a message
@@ -96,6 +100,9 @@ components:
         
         senderId: 
           $ref: "#/components/schemas/User/properties/userId" 
+        
+        chatId:
+          $ref: "#/components/schemas/Chat/properties/chatId"
         
         content:
           type: string
@@ -115,11 +122,13 @@ components:
         
         status:
           type: string
-          minLength: 1
-          maxLength: 20
-          pattern: "^.*$"
-          description: Details of the status
-          example: "Sent"
+          enum: [sent, received, read]
+          description: >
+            The status of the message:
+            - `sent`: The message has been sent but not delivered.
+            - `received`: The message has been delivered to the recipient's device.
+            - `read`: The message has been read by the recipient.
+          example: "read"
         
         timestamp:
           type: string
@@ -134,40 +143,6 @@ components:
           default: false
           description: If true, the message was forwarded
           example: true
-    
-    Group:
-      type: object
-      description: Details of a group
-      properties:
-        groupId:
-          type: integer
-          minimum: 1
-          maximum: 10000
-          description: Unique ID of a group
-
-        name:
-          type: string
-          minLength: 1
-          maxLength: 20
-          pattern: "^.*$"
-          example: "football"
-          description: Group name
-        
-        description:
-          type: string
-          minLength: 1
-          maxLength: 10000
-          pattern: "^.*$"
-          example: "we find ten people!"
-          description: Group description
-        
-        members:
-          type: array
-          minItems: 1  
-          maxItems: 10000
-          description: List of group members
-          items:
-            $ref: "#/components/schemas/User/properties/userId"
 
   securitySchemes:
     bearerAuth:
@@ -207,16 +182,6 @@ components:
       required: true
       in: path
       name: UserId
-    
-    GroupId:
-      schema:
-        type: integer
-        minimum: 1
-        maximum: 10000
-      description: Unique group id
-      required: true
-      in: path
-      name: GroupId
 
 tags:
   - name: User
@@ -422,7 +387,7 @@ paths:
         '404':
           description: Conversation not found
 
-  /conversations:
+  /chats:
     get:
       tags: 
         - Conversations
@@ -460,8 +425,48 @@ paths:
                     type: string
                     description: Message of error
                     example: "Invalid request"
+    
+    post:
+      tags:
+        - Chat
+      summary: Allows a user to create a new Chat
+      description: Endpoint to create a new chat
+      operationId: newChat
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Chat"
+            example:
+              createGroupChat:
+                summary: Example of creating a group chat
+                value:
+                  name: "Project Team"
+                  isGroup: True
+              createDirectChat:
+                summary: Example of creating a direct chat
+                value:
+                  name: "John Doe"
+                  isGroup: False
+      
+      responses:
+        '201':
+          description: Chat successfully created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Chat'
+        
+        '400':
+          description: Invalid request
+        
+        '401':
+          description: Unauthorized request
   
-  /conversations/{ChatId}:
+  /chats/{ChatId}:
     parameters:
       - $ref: "#/components/parameters/ChatId"
     
@@ -518,7 +523,7 @@ paths:
         '404':
           description: Conversation not found
   
-  /conversations/{ChatId}/messages:
+  /chats/{ChatId}/messages:
     parameters:
       - $ref: "#/components/parameters/ChatId"
     
@@ -568,85 +573,112 @@ paths:
         '404':
           description: Conversation not found
 
-  /conversations/{ChatId}/messages/{MsgId}/received:
+  /chats/{ChatId}/messages/status:
     parameters:
       - $ref: "#/components/parameters/ChatId"
-      - $ref: "#/components/parameters/MsgId"
-    
-    patch:
+
+    get:
       tags:
         - Message
-      summary: Update message status to 'received'
-      description: |- 
-        Set the status of a message as 'received'
-        to indicate receipt by the recipient
-      operationId: messageReceived
+      summary: Retrieve the status of all messages in a chat
+      description: |
+        Retrieves a list of all messages in the specified chat with their respective 
+        statuses (`sent`, `received`, or `read`).
+      operationId: getAllMessagesStatus
+      
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successfully retrieved the list of messages with their status
+          content:
+            application/json:
+              schema:
+                type: array
+                description: Schema of all messages
+                items:
+                  $ref: "#/components/schemas/Message"
+              examples:
+                allMessagesStatus:
+                  summary: Example of all messages with their status
+                  value:
+                    - messageId: "12345"
+                      chatId: "67890"
+                      senderId: "54321"
+                      content: "Hello!"
+                      timestamp: "2024-11-27T10:30:00Z"
+                      status: "sent"
+                    - messageId: "12346"
+                      chatId: "67890"
+                      senderId: "54321"
+                      content: "How are you?"
+                      timestamp: "2024-11-27T10:31:00Z"
+                      status: "received"
+                    - messageId: "12347"
+                      chatId: "67890"
+                      senderId: "98765"
+                      content: "I'm good, thanks!"
+                      timestamp: "2024-11-27T10:32:00Z"
+                      status: "read"
+
+  /chats/{ChatId}/messages/status/update:
+    parameters:
+          - $ref: "#/components/parameters/ChatId"
+
+    put:
+      tags:
+        - Message
+      summary: Update the status of messages in a chat
+      description: >
+        This endpoint allows updating the status of one or more messages in a chat. 
+        The status can be updated to `sent`, `received`, or `read` based on user actions.
+      operationId: updateMessagesStatus
+      security:
+        - bearerAuth: []
       requestBody:
-        description: New message status
         required: true
         content:
           application/json:
             schema:
               type: object
-              description: Schema of status of message
+              description: List of messages with their new status
               properties:
-                status:
-                  $ref: "#/components/schemas/Message/properties/status"
-      responses:
-        '200':
-          description: Message status updated successfully
-          content:
-            application/json:
-              schema:
-                type: object
-                description: Schema of status of message
-                properties:
-                  status:
-                    $ref: "#/components/schemas/Message/properties/status"
-        
-        '404':
-          description: Message or status not found
-        
-        '400':
-          description: Invalid request
-  
-  /conversations/{ChatId}/messages/{MsgId}/read:
-    parameters:
-      - $ref: "#/components/parameters/ChatId"
-      - $ref: "#/components/parameters/MsgId"
-    
-    patch:
-      tags:
-        - Message
-      summary: Update the reading status of a message
-      description: Update the reading status of a message
-      operationId: messageRead
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-              description: Schema of status of message
-              properties:
-                status:
-                  $ref: "#/components/schemas/Message/properties/status"
-    
-      responses:
-        '200':
-          description: Reading status updated successfully
-          content:
-            application/json:
-              schema:
-                type: object
-                description: Schema of status of message
-                properties:
-                  status:
-                    $ref: "#/components/schemas/Message/properties/status"
-        
-        '404':
-          description: Message or status not found
+                messages:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      messageId:
+                        type: string
+                        description: ID of the message to update
+                      status:
+                        type: string
+                        enum:
+                          - sent
+                          - received
+                          - read
+                        description: New status of the message
 
-  /conversations/{ChatId}/messages/{MsgId}/forward:
+      responses:
+        '200':
+          description: Successfully updated the status of the messages
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  updatedMessages:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Message"
+        '400':
+          description: Invalid request or missing message status
+        '401':
+          description: Unauthorized request
+        '404':
+          description: Chat or messages not found
+
+  /chats/{ChatId}/messages/{MsgId}/forward:
     parameters:
       - $ref: "#/components/parameters/ChatId" #ID of the conversation containing the original message
       - $ref: "#/components/parameters/MsgId"  #ID of the original message
@@ -705,7 +737,7 @@ paths:
         '404':
           description: Conversation or user not found
 
-  /conversations/{ChatId}/messages/{MsgId}/reaction:
+  /chats/{ChatId}/messages/{MsgId}/reaction:
     parameters:
       - $ref: "#/components/parameters/ChatId" #ID of the conversation containing the message
       - $ref: "#/components/parameters/MsgId"  #ID of the original message
@@ -827,7 +859,7 @@ paths:
         '404':
           description: Message or reaction not found
   
-  /conversations/{ChatId}/messages/{MsgId}:
+  /chats/{ChatId}/messages/{MsgId}:
     parameters:
       - $ref: "#/components/parameters/ChatId" #ID of the conversation containing the message
       - $ref: "#/components/parameters/MsgId"  #ID of the message to remove
@@ -860,45 +892,15 @@ paths:
         
         '404':
           description: Message or reaction not found
-  
-  /groups:
-    post:
-      tags:
-        - Group
-      summary: Allows a user to create a group
-      description: Endpoint to create a new group
-      operationId: createGroup
-      security:
-        - bearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/Group"
-      
-      responses:
-        '201':
-          description: Group successfully created
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Group'
-        
-        '400':
-          description: Invalid request
-        
-        '401':
-          description: Unauthorized request
 
-  /groups/{GroupId}/members:
+  /Chats/{ChatId}/members:
     parameters:
-      - $ref: "#/components/parameters/GroupId" #ID of the group to which the user is being added
+      - $ref: "#/components/parameters/ChatId" #ID of the group to which the user is being added
     post:
       tags: 
         - Group
-      summary: Allows a user to add another user to group
-      description: gives a user the possibility to add a user to group
+      summary: Add a user to a group chat
+      description: Allows a user to add another user to a chat of type group. The chat must have "isGroup:true"
       operationId: addToGroup
       security:
         - bearerAuth: []
@@ -944,15 +946,15 @@ paths:
         '404':
           description: Message or reaction not found
   
-  /groups/{GroupId}/members/{UserId}:
+  /chats/{ChatId}/members/{UserId}:
     parameters:
-      - $ref: "#/components/parameters/GroupId"
+      - $ref: "#/components/parameters/ChatId"
       - $ref: "#/components/parameters/UserId"
     delete:
       tags: 
         - Group
-      summary: Allows a user to remove a member of group
-      description: gives the possibility to remove a member of group
+      summary: Remove a user from a group chat
+      description: Allows a user to remove a member of group. The chat must have "isGroup:true"
       operationId: leaveGroup
       security:
         - bearerAuth: []
@@ -971,8 +973,7 @@ paths:
         
         '400':
           description: Invalid request
-        
-        
+
         '401':
           description: Unauthorized request
           content:
@@ -989,15 +990,15 @@ paths:
         '404':
           description: Group or user not found
 
-  /groups/{GroupId}/name:
+  /chats/{ChatId}/name:
     parameters:
-      - $ref: "#/components/parameters/GroupId"
+      - $ref: "#/components/parameters/ChatId"
     
     patch:
       tags: 
         - Group
-      summary: Allows a user to give a name a group
-      description: gives the possibility a user to rename a group
+      summary: rename a group chat
+      description: Allows a user to rename a group chat. The chat must have "isGroup:true"
       operationId: setGroupName
       security:
         - bearerAuth: []
@@ -1010,7 +1011,7 @@ paths:
               description: Shema of group name
               properties:
                 name:
-                  $ref: "#/components/schemas/Group/properties/name"
+                  $ref: "#/components/schemas/Chat/properties/name"
         
       responses:
         '200':
@@ -1044,15 +1045,15 @@ paths:
         '404':
           description: "Group not found"
   
-  /groups/{GroupId}/photo:
+  /chats/{ChatId}/photo:
     parameters:
-      - $ref: "#/components/parameters/GroupId"
+      - $ref: "#/components/parameters/ChatId"
     
     patch:
       tags: 
         - Group
-      summary: "Allows a user to set or updated group photo"
-      description: Allows the user to update the group photo
+      summary: Set or update a new group photo
+      description: Allows the user to update the group photo. The chat must have "isGroup:true"
       operationId: setGroupPhoto
       security:
         - bearerAuth: []
