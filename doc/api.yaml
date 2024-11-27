@@ -23,11 +23,10 @@ components:
           description: Name of a user
 
         userId:
-          type: string
-          minLength: 1
-          maxLength: 10000
-          pattern: "^.*$"
-          example: "Mario23"
+          type: integer
+          minimum: 1
+          maximum: 10000
+          example: 1234
           description: Unique ID of a user
           readOnly: true
         
@@ -95,7 +94,7 @@ components:
           type: integer
           minimum: 0
           maximum: 10000
-          example: 2
+          example: 4343
           description: Unique ID of a message
         
         senderId: 
@@ -173,11 +172,10 @@ components:
     
     UserId:
       schema:
-        type: string
-        pattern: "^.*$"
-        example: "mario234"
-        minLength: 1
-        maxLength: 10000
+        type: integer
+        example: 2323
+        minimum: 1
+        maximum: 10000
       description: Unique user id
       required: true
       in: path
@@ -187,7 +185,7 @@ tags:
   - name: User
     description: Operazioni relative agli utenti
   
-  - name: Conversations
+  - name: Chat
     description: Operazioni relative alle chat
   
   - name: Message
@@ -390,7 +388,7 @@ paths:
   /chats:
     get:
       tags: 
-        - Conversations
+        - Chat
       summary: Allows a user to get a list of his conversations
       description: Allows a user to get a list of his conversations
       operationId: getMyConversations
@@ -405,7 +403,7 @@ paths:
                 type: object
                 description: Schema of chat's list
                 properties:
-                  conversations:
+                  chats:
                     type: array
                     minItems: 0
                     maxItems: 2000
@@ -440,7 +438,7 @@ paths:
           application/json:
             schema:
               $ref: "#/components/schemas/Chat"
-            example:
+            examples:
               createGroupChat:
                 summary: Example of creating a group chat
                 value:
@@ -472,7 +470,7 @@ paths:
     
     get:
       tags: 
-        - Conversations
+        - Chat
       summary: Allows a user to get the details of a single conversation
       description: Allows a user to get the conversation details
       operationId: getConversation
@@ -507,7 +505,7 @@ paths:
     
     delete:
       tags:
-        - Conversations
+        - Chat
       summary: Allows a user to delete a chat
       description: deletes a conversation, especially the one specified in the path
       operationId: deleteConversation
@@ -595,6 +593,8 @@ paths:
             application/json:
               schema:
                 type: array
+                minItems: 0
+                maxItems: 10000
                 description: Schema of all messages
                 items:
                   $ref: "#/components/schemas/Message"
@@ -602,21 +602,21 @@ paths:
                 allMessagesStatus:
                   summary: Example of all messages with their status
                   value:
-                    - messageId: "12345"
-                      chatId: "67890"
-                      senderId: "54321"
+                    - messageId: 1234
+                      chatId: 6890
+                      senderId: 5321
                       content: "Hello!"
                       timestamp: "2024-11-27T10:30:00Z"
                       status: "sent"
-                    - messageId: "12346"
-                      chatId: "67890"
-                      senderId: "54321"
+                    - messageId: 2346
+                      chatId: 6890
+                      senderId: 5321
                       content: "How are you?"
                       timestamp: "2024-11-27T10:31:00Z"
                       status: "received"
-                    - messageId: "12347"
-                      chatId: "67890"
-                      senderId: "98765"
+                    - messageId: 1347
+                      chatId: 6780
+                      senderId: 8765
                       content: "I'm good, thanks!"
                       timestamp: "2024-11-27T10:32:00Z"
                       status: "read"
@@ -645,19 +645,16 @@ paths:
               properties:
                 messages:
                   type: array
+                  minItems: 0
+                  maxItems: 1000
+                  description: Messages retrieves with their status
                   items:
                     type: object
                     properties:
                       messageId:
-                        type: string
-                        description: ID of the message to update
+                        $ref: "#/components/schemas/Message/properties/messageId"
                       status:
-                        type: string
-                        enum:
-                          - sent
-                          - received
-                          - read
-                        description: New status of the message
+                        $ref: "#/components/schemas/Message/properties/status"
 
       responses:
         '200':
@@ -666,11 +663,20 @@ paths:
             application/json:
               schema:
                 type: object
+                description: Schema of success
                 properties:
                   updatedMessages:
                     type: array
+                    minItems: 0
+                    maxItems: 1000
+                    description: messages with new status
                     items:
-                      $ref: "#/components/schemas/Message"
+                      type: object
+                      properties:
+                        messageId:
+                          $ref: "#/components/schemas/Message/properties/messageId"
+                        status:
+                          $ref: "#/components/schemas/Message/properties/status"
         '400':
           description: Invalid request or missing message status
         '401':
@@ -686,8 +692,8 @@ paths:
     post:
       tags: 
         - Message
-      summary: Allows a user to forward a message
-      description: gives the user the possibility to forward a message
+      summary: Forward a message to another chat
+      description: Allows a user to forward an existing message to a different chat.
       operationId: forwardMessage
       security:
         - bearerAuth: []
@@ -713,10 +719,6 @@ paths:
                 properties:
                   message:
                     $ref: "#/components/schemas/Message"
-                  isForwarded:
-                    type: boolean
-                    description: Status of message
-                    default: true
         
         '400':
           description: Invalid request parameters
@@ -893,7 +895,7 @@ paths:
         '404':
           description: Message or reaction not found
 
-  /Chats/{ChatId}/members:
+  /chats/{ChatId}/members:
     parameters:
       - $ref: "#/components/parameters/ChatId" #ID of the group to which the user is being added
     post:
