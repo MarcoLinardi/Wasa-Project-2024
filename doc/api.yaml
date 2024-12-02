@@ -228,9 +228,9 @@ paths:
                 description: Return a identifier
                 properties:
                   identifier:
-                    type: string
+                    type: integer
                     description: identifier
-                    example: "abcdef012345"
+                    example: 2345
   
   /user/name:
     patch: 
