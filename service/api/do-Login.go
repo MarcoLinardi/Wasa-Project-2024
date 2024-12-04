@@ -4,6 +4,7 @@ import (
 	"Wasa-Project-2024/service/api/reqcontext"
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 
@@ -39,7 +40,7 @@ func (rt *_router) doLogin(w http.ResponseWriter, r *http.Request, ps httprouter
 	var err error
 	LoginResponse.Identifier, err = rt.db.GetUserIdByName(requestBody.Name)
 	if err != nil {
-		if error.Is(err, sql.ErrNoRows) {
+		if errors.Is(err, sql.ErrNoRows) {
 			//devo creare l'utente ed inserirlo nel database
 		} else {
 			http.Error(w, "Internal server error", http.StatusInternalServerError)
@@ -50,7 +51,7 @@ func (rt *_router) doLogin(w http.ResponseWriter, r *http.Request, ps httprouter
 
 	// Invia la risposta al client
 	w.Header().Set("Content-Type", "application/json")
-	w.Header().Set("Authentication", fmt.Sprintf("bearerAuth: %s", LoginResponse.Identifier))
+	w.Header().Set("Authentication", fmt.Sprintf("bearerAuth: %d", LoginResponse.Identifier))
 	w.WriteHeader(http.StatusCreated)
 	if err := json.NewEncoder(w).Encode(LoginResponse); err != nil {
 		ctx.Logger.Error("Failed to encode response:", err)
@@ -60,5 +61,4 @@ func (rt *_router) doLogin(w http.ResponseWriter, r *http.Request, ps httprouter
 
 	// Logga il successo
 	ctx.Logger.Infof("User login successful for name: %s", requestBody.Name)
-	return
 }

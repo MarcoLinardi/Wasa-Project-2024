@@ -24,7 +24,7 @@ components:
 
         userId:
           type: integer
-          minimum: 1
+          minimum: 10
           maximum: 10000
           example: 1234
           description: Unique ID of a user
@@ -174,7 +174,7 @@ components:
       schema:
         type: integer
         example: 2323
-        minimum: 1
+        minimum: 100
         maximum: 10000
       description: Unique user id
       required: true
