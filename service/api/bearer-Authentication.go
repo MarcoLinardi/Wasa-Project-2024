@@ -3,7 +3,9 @@ package api
 import (
 	"Wasa-Project-2024/service/api/reqcontext"
 	"database/sql"
+	"errors"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/julienschmidt/httprouter"
@@ -25,16 +27,19 @@ func (rt *_router) bearerAuth(fn httpRouterHandler) httpRouterHandler {
 
 		// Estraggo il token dall'header (rimuovo "bearer" dall'header)
 		token := strings.TrimPrefix(authHeader, "Bearer ")
-		if err := utilitytool.userIdIsValid(token); err != nil {
-			ctx.Logger.WithError(err).Warnf("Invalid token <%s>", token)
-			http.Error(w, "Unauthorized - invalid token", http.StatusUnauthorized)
+
+		userId, err := strconv.Atoi(token)
+
+		if err != nil {
+			ctx.Logger.WithError(err).Warnf("Invalid token format <%s>", token)
+			http.Error(w, "Unauthorized - invalid token format", http.StatusUnauthorized)
 			return
 		}
 
 		// Verifico se il token corrisponde ad un userId di un utente già registrato
-		exist, err := rt.db.userIdExist(token)
+		exist, err := rt.db.UserIdExist(userId)
 		if err != nil {
-			if error.Is(err, sql.ErrNoRows) {
+			if errors.Is(err, sql.ErrNoRows) {
 				ctx.Logger.WithError(err).Warnf("Token: <%s> does not exist", token)
 				http.Error(w, "Unauthorized - token not valid or deprecated", http.StatusInternalServerError)
 				return

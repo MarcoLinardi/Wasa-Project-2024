@@ -1,10 +1,10 @@
-package api
+package utilitytool
 
 import (
 	"fmt"
 )
 
-func userIdIsValid(userId int) error {
+func UserIdIsValid(userId int) error {
 
 	// Controlla se l'ID è nel range valido
 	if userId < 100 {

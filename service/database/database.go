@@ -40,6 +40,7 @@ import (
 type AppDatabase interface {
 	GetUserIdByName(name string) (int, error)
 	SetName(name string) error
+	UserIdExist(userId int) (bool, error)
 
 	Ping() error
 }
@@ -70,7 +71,7 @@ func New(db *sql.DB) (AppDatabase, error) {
 	tableName = ""
 	err = db.QueryRow(`SELECT name FROM sqlite_master WHERE type='table' AND name='users_table';`).Scan(&tableName)
 	if errors.Is(err, sql.ErrNoRows) {
-		sqlStmt := `CREATE TABLE users_table (userId INTEGER NOT NULL PRIMARY KEY,
+		sqlStmt := `CREATE TABLE users_table (userId INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
 												name TEXT
 												photo TEXT);`
 		_, err = db.Exec(sqlStmt)
