@@ -13,7 +13,7 @@ import (
 
 func (rt *_router) bearerAuth(fn httpRouterHandler) httpRouterHandler {
 
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params, ctx reqcontext.RequestContext) {
+	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params, ctx *reqcontext.RequestContext) {
 
 		// Estraggo l'header "Authentication" dalla richiesta
 		authHeader := r.Header.Get("Authorization")

@@ -12,7 +12,7 @@ import (
 )
 
 // DoLogin è l'handler per l'endpoint /login
-func (rt *_router) doLogin(w http.ResponseWriter, r *http.Request, ps httprouter.Params, ctx reqcontext.RequestContext) {
+func (rt *_router) doLogin(w http.ResponseWriter, r *http.Request, ps httprouter.Params, ctx *reqcontext.RequestContext) {
 	var requestBody = struct {
 		Name string `json:"name"` // Il nome dell'utente passato nella richiesta
 	}{}
@@ -61,5 +61,4 @@ func (rt *_router) doLogin(w http.ResponseWriter, r *http.Request, ps httprouter
 
 	// Logga il successo
 	ctx.Logger.Infof("User login successful for name: %s", requestBody.Name)
-	return
 }

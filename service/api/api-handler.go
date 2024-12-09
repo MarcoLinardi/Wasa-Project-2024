@@ -13,7 +13,7 @@ func (rt *_router) Handler() http.Handler {
 	// Login operations
 	rt.router.POST("/session", rt.wrap(rt.doLogin)) // fatto
 	// User operations
-	rt.router.PATCH("/user/name", rt.wrap(rt.bearerAuth(rt.setMyUserName))) // da fare
+	rt.router.PATCH("/user/name", rt.wrap(rt.bearerAuth(rt.setMyUserName)))
 	//rt.router.PATCH("/user/photo", rt.wrap(rt.bearerAuth(rt.setMyPhoto))) // da fare
 	// Chat operations
 
