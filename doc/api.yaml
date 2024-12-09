@@ -16,7 +16,7 @@ components:
       properties:
         name:
           type: string
-          minLength: 1
+          minLength: 3
           maxLength: 20
           pattern: "^.*$"
           example: "Mario"

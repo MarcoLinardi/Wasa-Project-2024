@@ -57,6 +57,9 @@ func (rt *_router) bearerAuth(fn httpRouterHandler) httpRouterHandler {
 			return
 		}
 
+		// Aggiungo l'userId al contesto
+		ctx.UserID = userId
+		ctx.Logger.Infof("UserID set in context: %d", userId)
 		// If the token is valid call the next handler in chain (usually, the handler function for the path)
 		fn(w, r, ps, ctx)
 	}

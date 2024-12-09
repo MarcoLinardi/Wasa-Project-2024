@@ -41,7 +41,9 @@ type AppDatabase interface {
 	GetUserIdByName(name string) (int, error)
 	SetName(name string) error
 	UserIdExist(userId int) (bool, error)
+	CreateUser(name string) (int, error)
 
+	Exec(query string, args ...interface{}) (sql.Result, error)
 	Ping() error
 }
 
@@ -87,4 +89,9 @@ func New(db *sql.DB) (AppDatabase, error) {
 
 func (db *appdbimpl) Ping() error {
 	return db.c.Ping()
+}
+
+// Exec esegue una query senza restituire righe (es. INSERT, UPDATE, DELETE)
+func (db *appdbimpl) Exec(query string, args ...interface{}) (sql.Result, error) {
+	return db.c.Exec(query, args...)
 }
