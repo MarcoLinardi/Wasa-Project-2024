@@ -33,9 +33,9 @@ components:
         photo:
           type: string
           format: binary
-          description: The photo is a binary file in the payload
+          description: The photo is a binary file,
           example: "iVBORw0KGgoAAAANSUhEUgAAAAUA..."
-          minLength: 0
+          minLength: 4
           maxLength: 1374389 #equivalente di 1MB di foto
     
     Chat:
@@ -44,25 +44,20 @@ components:
       properties:
         chatId:
           type: integer
-          minimum: 1
+          minimum: 10
           maximum: 10000
           description: Unique ID of a chat
         
         name:
           type: string
-          minLength: 1
+          minLength: 3
           maxLength: 20
           pattern: "^.*$"
           example: "Mario"
           description: Username or group name
         
         photo:
-          type: string
-          format: binary
-          description: The photo is a binary file, it's the user or group photo
-          example: "iVBORw0KGgoAAAANSUhEUgAAAAUA..."
-          minLength: 0
-          maxLength: 1374389 #equivalente di 1MB di foto
+          $ref: "#/components/schemas/Photo"
         
         isGroup:
           type: boolean
@@ -112,12 +107,7 @@ components:
           description: Content of the message
         
         photo:
-          type: string
-          format: binary
-          description: The photo is a binary file,
-          example: "iVBORw0KGgoAAAANSUhEUgAAAAUA..."
-          minLength: 0
-          maxLength: 2748778
+          $ref: "#/components/schemas/Photo"
         
         status:
           type: string
@@ -142,7 +132,7 @@ components:
           default: false
           description: If true, the message was forwarded
           example: true
-
+      
   securitySchemes:
     bearerAuth:
       type: http
@@ -193,8 +183,6 @@ tags:
 
   - name: Group
     description: Operazioni relative ai gruppi
-
-
 
 paths:
   /login:
@@ -312,7 +300,7 @@ paths:
               description: Schema of photo
               properties:
                 photo:
-                  $ref: "#/components/schemas/Chat/properties/photo"
+                  $ref: "#/components/schemas/User/properties/photo"
       responses:
         '200':
           description: Photo updated successfully
@@ -323,7 +311,7 @@ paths:
                 description: Schema of photo
                 properties:
                   photo:
-                    $ref: "#/components/schemas/Chat/properties/photo"
+                    $ref: "#/components/schemas/Photo"
         
         '400':
           description: Invalid request

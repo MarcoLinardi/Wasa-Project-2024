@@ -3,17 +3,21 @@ package api
 import (
 	"Wasa-Project-2024/service/api/reqcontext"
 	"Wasa-Project-2024/service/utilitytool"
+	"database/sql"
 	"encoding/json"
+	"errors"
 	"net/http"
 
 	"github.com/julienschmidt/httprouter"
 )
 
 func (rt *_router) setMyUserName(w http.ResponseWriter, r *http.Request, ps httprouter.Params, ctx *reqcontext.RequestContext) {
-	// Decodifica il corpo della richiesta JSON
+
 	var reqBody struct {
 		NewName string `json:"newName"`
 	}
+
+	// Decodifica il corpo della richiesta JSON
 	if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
 		http.Error(w, `{"error": "Invalid request body"}`, http.StatusBadRequest)
 		return
@@ -25,21 +29,16 @@ func (rt *_router) setMyUserName(w http.ResponseWriter, r *http.Request, ps http
 		return
 	}
 
-	// Recupera l'userId dal contesto
-	userId := ctx.UserID
-
 	// Aggiorna il database
-	query := "UPDATE users_table SET name = ? WHERE id = ?"
-	result, err := rt.db.Exec(query, reqBody.NewName, userId)
+	err := rt.db.UpdateUsername(reqBody.NewName, ctx.UserID)
 	if err != nil {
-		http.Error(w, `{"error": "Internal server error"}`, http.StatusInternalServerError)
-		return
-	}
-
-	// Verifica se è stato modificato qualcosa
-	rowsAffected, err := result.RowsAffected()
-	if err != nil || rowsAffected == 0 {
-		http.Error(w, `{"error": "User not found or no changes made"}`, http.StatusNotFound)
+		if errors.Is(err, sql.ErrNoRows) {
+			http.Error(w, "User not found", http.StatusNotFound)
+			ctx.Logger.WithError(err).Error("User not found")
+			return
+		}
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		ctx.Logger.WithError(err).Error("Internal server error")
 		return
 	}
 

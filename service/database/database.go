@@ -42,13 +42,22 @@ type AppDatabase interface {
 	SetName(name string) error
 	UserIdExist(userId int) (bool, error)
 	CreateUser(name string) (int, error)
+	UpdatePhoto(photo string, userId int) error
+	UpdateUsername(newName string, userId int) error
+	GetUsers() ([]User, error)
 
-	Exec(query string, args ...interface{}) (sql.Result, error)
 	Ping() error
 }
 
 type appdbimpl struct {
 	c *sql.DB
+}
+
+// User rappresenta un utente nel database
+type User struct {
+	UserID int    `json:"userId"`
+	Name   string `json:"name"`
+	Photo  string `json:"photo"`
 }
 
 // New returns a new instance of AppDatabase based on the SQLite connection `db`.
@@ -58,24 +67,28 @@ func New(db *sql.DB) (AppDatabase, error) {
 		return nil, errors.New("database is required when building a AppDatabase")
 	}
 
-	// Check if table exists. If not, the database is empty, and we need to create the structure
 	var tableName string
-	err := db.QueryRow(`SELECT name FROM sqlite_master WHERE type='table' AND name='example_table';`).Scan(&tableName)
+
+	// TABELLA CHAT
+	err := db.QueryRow(`SELECT name FROM sqlite_master WHERE type='table' AND name='chats_table';`).Scan(&tableName)
 	if errors.Is(err, sql.ErrNoRows) {
-		sqlStmt := `CREATE TABLE example_table (id INTEGER NOT NULL PRIMARY KEY, name TEXT);`
+		sqlStmt := `CREATE TABLE chats_table (id INTEGER NOT NULL PRIMARY KEY, 
+												name TEXT
+												);`
 		_, err = db.Exec(sqlStmt)
 		if err != nil {
 			return nil, fmt.Errorf("error creating database structure: %w", err)
 		}
 	}
 
-	// Controllo se esiste la tabella degli utenti, altrimentilo crea
+	// TABELLA UTENTI
 	tableName = ""
 	err = db.QueryRow(`SELECT name FROM sqlite_master WHERE type='table' AND name='users_table';`).Scan(&tableName)
 	if errors.Is(err, sql.ErrNoRows) {
 		sqlStmt := `CREATE TABLE users_table (userId INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
 												name TEXT
-												photo TEXT);`
+												photo TEXT
+												chatId TEXT);`
 		_, err = db.Exec(sqlStmt)
 		if err != nil {
 			return nil, fmt.Errorf("error creating database structure: %w", err)
@@ -89,9 +102,4 @@ func New(db *sql.DB) (AppDatabase, error) {
 
 func (db *appdbimpl) Ping() error {
 	return db.c.Ping()
-}
-
-// Exec esegue una query senza restituire righe (es. INSERT, UPDATE, DELETE)
-func (db *appdbimpl) Exec(query string, args ...interface{}) (sql.Result, error) {
-	return db.c.Exec(query, args...)
 }
