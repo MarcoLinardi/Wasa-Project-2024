@@ -44,7 +44,7 @@ func (rt *_router) setMyPhoto(w http.ResponseWriter, r *http.Request, _ httprout
 	}
 
 	// Aggiorna il campo "photo" nella tabella "users_table"
-	err = rt.db.UpdatePhoto(reqBody.Photo, ctx.UserID)
+	err = rt.db.UpdateUserPhoto(reqBody.Photo, ctx.UserID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			http.Error(w, "User not found", http.StatusNotFound)

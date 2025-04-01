@@ -11,12 +11,16 @@ func (rt *_router) Handler() http.Handler {
 	rt.router.GET("/context", rt.wrap(rt.getContextReply))
 
 	// Login operations
-	rt.router.POST("/session", rt.wrap(rt.doLogin)) // fatto
+	rt.router.POST("/session", rt.wrap(rt.doLogin))
+
 	// User operations
 	rt.router.PATCH("/user/name", rt.wrap(rt.bearerAuth(rt.setMyUserName)))
 	rt.router.PATCH("/user/photo", rt.wrap(rt.bearerAuth(rt.setMyPhoto)))
 	rt.router.GET("/users", rt.wrap(rt.bearerAuth(rt.listOfUsers)))
+
 	// Chat operations
+	rt.router.GET("/chats", rt.wrap(rt.bearerAuth(rt.listOfChats)))
+	rt.router.POST("/chats", rt.wrap(rt.bearerAuth(rt.createChat)))
 
 	// Special routes
 	rt.router.GET("/liveness", rt.liveness)

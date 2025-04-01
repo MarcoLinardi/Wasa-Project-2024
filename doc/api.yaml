@@ -50,7 +50,7 @@ components:
         
         name:
           type: string
-          minLength: 3
+          minLength: 1
           maxLength: 20
           pattern: "^.*$"
           example: "Mario"
@@ -69,17 +69,13 @@ components:
         participants:
           type: array
           minItems: 1  
-          maxItems: 10000
+          maxItems: 500
           description: List of group members
           items:
             $ref: "#/components/schemas/User/properties/userId"
         
         lastMessage:
           $ref: "#/components/schemas/Message"
-    
-      required:
-        - name
-        - isGroup
     
     Message:
       type: object

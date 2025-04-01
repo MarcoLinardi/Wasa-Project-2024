@@ -41,7 +41,7 @@ func (rt *_router) doLogin(w http.ResponseWriter, r *http.Request, ps httprouter
 	LoginResponse.Identifier, err = rt.db.GetUserIdByName(requestBody.Name)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			//devo creare l'utente ed inserirlo nel database
+			// Devo creare l'utente ed inserirlo nel database
 		} else {
 			http.Error(w, "Internal server error", http.StatusInternalServerError)
 			ctx.Logger.WithError(err).Error("Error while retriving user id by the user name")

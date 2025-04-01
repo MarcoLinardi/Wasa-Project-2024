@@ -42,9 +42,11 @@ type AppDatabase interface {
 	SetName(name string) error
 	UserIdExist(userId int) (bool, error)
 	CreateUser(name string) (int, error)
-	UpdatePhoto(photo string, userId int) error
+	UpdateUserPhoto(photo string, userId int) error
 	UpdateUsername(newName string, userId int) error
 	GetUsers() ([]User, error)
+	GetChats(userId int) ([]Chat, error)
+	CreateChat(name string, users []int) (int, error)
 
 	Ping() error
 }
@@ -58,6 +60,14 @@ type User struct {
 	UserID int    `json:"userId"`
 	Name   string `json:"name"`
 	Photo  string `json:"photo"`
+}
+
+type Chat struct {
+	ChatID int    `json:"chatId"`
+	Name   string `json:"name"`
+	// Photo       Photo  `json:"photo"`       // Oggetto Photo, definito altrove
+	IsGroup      bool  `json:"isGroup"` // true = gruppo, false = chat uno-a-uno
+	Participants []int `json:"participants"`
 }
 
 // New returns a new instance of AppDatabase based on the SQLite connection `db`.
