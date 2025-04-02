@@ -47,6 +47,7 @@ type AppDatabase interface {
 	GetUsers() ([]User, error)
 	GetChats(userId int) ([]Chat, error)
 	CreateChat(name string, users []int) (int, error)
+	GetChatDetails(chatID int, userID int) (*Chat, error)
 
 	Ping() error
 }
@@ -65,9 +66,18 @@ type User struct {
 type Chat struct {
 	ChatID int    `json:"chatId"`
 	Name   string `json:"name"`
-	// Photo       Photo  `json:"photo"`       // Oggetto Photo, definito altrove
-	IsGroup      bool  `json:"isGroup"` // true = gruppo, false = chat uno-a-uno
-	Participants []int `json:"participants"`
+	// Photo       Photo  `json:"photo"`
+	IsGroup  bool      `json:"isGroup"`
+	Messages []Message `json:"messages"`
+}
+
+type Message struct {
+	MessageID   int    `json:"id"`
+	SenderID    int    `json:"senderId"`
+	Content     string `json:"content"`
+	Timestamp   string `json:"timestamp"`
+	Status      string `json:"status"`
+	IsForwarded bool   `json:"isForwarded"`
 }
 
 // New returns a new instance of AppDatabase based on the SQLite connection `db`.
@@ -82,8 +92,24 @@ func New(db *sql.DB) (AppDatabase, error) {
 	// TABELLA CHAT
 	err := db.QueryRow(`SELECT name FROM sqlite_master WHERE type='table' AND name='chats_table';`).Scan(&tableName)
 	if errors.Is(err, sql.ErrNoRows) {
-		sqlStmt := `CREATE TABLE chats_table (id INTEGER NOT NULL PRIMARY KEY, 
+		sqlStmt := `CREATE TABLE chats_table (chat_id INTEGER NOT NULL PRIMARY KEY, 
 												name TEXT
+												is_group BOOLEAN DEFAULT 0
+												);`
+		_, err = db.Exec(sqlStmt)
+		if err != nil {
+			return nil, fmt.Errorf("error creating database structure: %w", err)
+		}
+	}
+
+	// TABELLA MEMBRI CHAT
+	err = db.QueryRow(`SELECT name FROM sqlite_master WHERE type='table' AND name='chat_members';`).Scan(&tableName)
+	if errors.Is(err, sql.ErrNoRows) {
+		sqlStmt := `CREATE TABLE chat_members (chat_id INTEGER NOT NULL,
+    											user_id INTEGER NOT NULL,
+												PRIMARY KEY (chat_id, user_id),
+												FOREIGN KEY (chat_id) REFERENCES chats_table(id) ON DELETE CASCADE,
+												FOREIGN KEY (user_id) REFERENCES users_table(userId) ON DELETE CASCADE
 												);`
 		_, err = db.Exec(sqlStmt)
 		if err != nil {
@@ -98,10 +124,28 @@ func New(db *sql.DB) (AppDatabase, error) {
 		sqlStmt := `CREATE TABLE users_table (userId INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
 												name TEXT
 												photo TEXT
-												chatId TEXT);`
+												);`
 		_, err = db.Exec(sqlStmt)
 		if err != nil {
 			return nil, fmt.Errorf("error creating database structure: %w", err)
+		}
+	}
+
+	// === TABELLA MESSAGES ===
+	err = db.QueryRow(`SELECT name FROM sqlite_master WHERE type='table' AND name='messages';`).Scan(&tableName)
+	if errors.Is(err, sql.ErrNoRows) {
+		sqlStmt := `CREATE TABLE messages (message_id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+										chat_id INTEGER NOT NULL,
+										sender_id INTEGER NOT NULL,
+										content TEXT NOT NULL,
+										timestamp TEXT NOT NULL,
+										FOREIGN KEY (chat_id) REFERENCES chats_table(id) ON DELETE CASCADE,
+										FOREIGN KEY (sender_id) REFERENCES users_table(userId) ON DELETE CASCADE
+										);`
+
+		_, err = db.Exec(sqlStmt)
+		if err != nil {
+			return nil, fmt.Errorf("error creating messages table: %w", err)
 		}
 	}
 

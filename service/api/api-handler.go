@@ -21,6 +21,8 @@ func (rt *_router) Handler() http.Handler {
 	// Chat operations
 	rt.router.GET("/chats", rt.wrap(rt.bearerAuth(rt.listOfChats)))
 	rt.router.POST("/chats", rt.wrap(rt.bearerAuth(rt.createChat)))
+	rt.router.GET("/chats/{ChatId}", rt.wrap(rt.bearerAuth(rt.detailsChat)))
+	// rt.router.DELETE("/chats/{ChatId}", rt.wrap(rt.bearerAuth(rt.deleteChat)))
 
 	// Special routes
 	rt.router.GET("/liveness", rt.liveness)

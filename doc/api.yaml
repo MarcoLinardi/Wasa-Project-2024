@@ -24,8 +24,8 @@ components:
 
         userId:
           type: integer
-          minimum: 10
-          maximum: 10000
+          minimum: 100
+          maximum: 100
           example: 1234
           description: Unique ID of a user
           readOnly: true
@@ -44,8 +44,8 @@ components:
       properties:
         chatId:
           type: integer
-          minimum: 10
-          maximum: 10000
+          minimum: 100
+          maximum: 100
           description: Unique ID of a chat
         
         name:
@@ -57,7 +57,7 @@ components:
           description: Username or group name
         
         photo:
-          $ref: "#/components/schemas/Photo"
+          $ref: "#/components/schemas/User/properties/photo"
         
         isGroup:
           type: boolean
@@ -68,13 +68,13 @@ components:
         
         participants:
           type: array
-          minItems: 1  
+          minItems: 2  
           maxItems: 500
           description: List of group members
           items:
             $ref: "#/components/schemas/User/properties/userId"
         
-        lastMessage:
+        messages:
           $ref: "#/components/schemas/Message"
     
     Message:
@@ -83,8 +83,8 @@ components:
       properties: 
         messageId:
           type: integer
-          minimum: 0
-          maximum: 10000
+          minimum: 100
+          maximum: 100
           example: 4343
           description: Unique ID of a message
         
@@ -97,13 +97,13 @@ components:
         content:
           type: string
           minLength: 1
-          maxLength: 10000
+          maxLength: 500
           pattern: "^.*$"
           example: "Hi, i'm marco"
           description: Content of the message
         
         photo:
-          $ref: "#/components/schemas/Photo"
+          $ref: "#/components/schemas/User/properties/photo"
         
         status:
           type: string
@@ -139,8 +139,8 @@ components:
     ChatId:
       schema:
         type: integer
-        minimum: 1
-        maximum: 10000
+        minimum: 10
+        maximum: 10
       description: Unique chat id
       required: true
       in: path
@@ -149,8 +149,8 @@ components:
     MsgId:
       schema:
         type: integer
-        minimum: 1
-        maximum: 10000
+        minimum: 10
+        maximum: 10
       description: Unique msg id
       required: true
       in: path
@@ -160,8 +160,8 @@ components:
       schema:
         type: integer
         example: 2323
-        minimum: 100
-        maximum: 10000
+        minimum: 10
+        maximum: 1000
       description: Unique user id
       required: true
       in: path
@@ -307,7 +307,7 @@ paths:
                 description: Schema of photo
                 properties:
                   photo:
-                    $ref: "#/components/schemas/Photo"
+                    $ref: "#/components/schemas/User/properties/photo"
         
         '400':
           description: Invalid request
@@ -578,7 +578,7 @@ paths:
               schema:
                 type: array
                 minItems: 0
-                maxItems: 10000
+                maxItems: 100
                 description: Schema of all messages
                 items:
                   $ref: "#/components/schemas/Message"
@@ -630,7 +630,7 @@ paths:
                 messages:
                   type: array
                   minItems: 0
-                  maxItems: 1000
+                  maxItems: 100
                   description: Messages retrieves with their status
                   items:
                     type: object
