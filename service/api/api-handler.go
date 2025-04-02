@@ -6,9 +6,6 @@ import (
 
 // Handler returns an instance of httprouter.Router that handle APIs registered here
 func (rt *_router) Handler() http.Handler {
-	// Register routes
-	rt.router.GET("/", rt.getHelloWorld)
-	rt.router.GET("/context", rt.wrap(rt.getContextReply))
 
 	// Login operations
 	rt.router.POST("/session", rt.wrap(rt.doLogin))
@@ -22,10 +19,10 @@ func (rt *_router) Handler() http.Handler {
 	rt.router.GET("/chats", rt.wrap(rt.bearerAuth(rt.listOfChats)))
 	rt.router.POST("/chats", rt.wrap(rt.bearerAuth(rt.createChat)))
 	rt.router.GET("/chats/{ChatId}", rt.wrap(rt.bearerAuth(rt.detailsChat)))
-	// rt.router.DELETE("/chats/{ChatId}", rt.wrap(rt.bearerAuth(rt.deleteChat)))
+	rt.router.DELETE("/chats/{ChatId}", rt.wrap(rt.bearerAuth(rt.deleteChat)))
 
-	// Special routes
-	rt.router.GET("/liveness", rt.liveness)
+	// Message Operations
+	rt.router.POST("/chats/{ChatId}/messages", rt.wrap(rt.bearerAuth(rt.sendMessage)))
 
 	return rt.router
 }

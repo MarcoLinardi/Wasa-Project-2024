@@ -48,6 +48,8 @@ type AppDatabase interface {
 	GetChats(userId int) ([]Chat, error)
 	CreateChat(name string, users []int) (int, error)
 	GetChatDetails(chatID int, userID int) (*Chat, error)
+	DeleteChat(chatID int) error
+	SaveMessage(msg Message) (int, error)
 
 	Ping() error
 }
@@ -72,8 +74,9 @@ type Chat struct {
 }
 
 type Message struct {
-	MessageID   int    `json:"id"`
+	MessageID   int    `json:"messageId"`
 	SenderID    int    `json:"senderId"`
+	ChatID      int    `json:"chatId"`
 	Content     string `json:"content"`
 	Timestamp   string `json:"timestamp"`
 	Status      string `json:"status"`
@@ -131,7 +134,7 @@ func New(db *sql.DB) (AppDatabase, error) {
 		}
 	}
 
-	// === TABELLA MESSAGES ===
+	// TABELLA MESSAGES
 	err = db.QueryRow(`SELECT name FROM sqlite_master WHERE type='table' AND name='messages';`).Scan(&tableName)
 	if errors.Is(err, sql.ErrNoRows) {
 		sqlStmt := `CREATE TABLE messages (message_id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
