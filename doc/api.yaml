@@ -85,7 +85,7 @@ components:
           type: integer
           minimum: 1
           maximum: 10000
-          example: 4343
+          example: 3
           description: Unique ID of a message
         
         senderId: 
@@ -139,8 +139,8 @@ components:
     ChatId:
       schema:
         type: integer
-        minimum: 10
-        maximum: 10
+        minimum: 1
+        maximum: 1000
       description: Unique chat id
       required: true
       in: path
@@ -149,8 +149,8 @@ components:
     MsgId:
       schema:
         type: integer
-        minimum: 10
-        maximum: 10
+        minimum: 1
+        maximum: 10000
       description: Unique msg id
       required: true
       in: path
@@ -158,10 +158,11 @@ components:
     
     UserId:
       schema:
-        type: integer
-        example: 2323
-        minimum: 10
+        type: integer 
+        minimum: 1
         maximum: 1000
+        example: 2
+       
       description: Unique user id
       required: true
       in: path
@@ -214,7 +215,7 @@ paths:
                   identifier:
                     type: integer
                     description: identifier
-                    example: 2345
+                    example: 2
   
   /user/name:
     patch: 
