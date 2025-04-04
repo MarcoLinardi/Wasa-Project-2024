@@ -21,7 +21,7 @@ func (db *appdbimpl) CreateChat(name string, users []int) (int, error) {
 
 	// Inserisco gli utenti nella tabella `chat_users`
 	for _, userID := range users {
-		_, err := db.c.Exec("INSERT INTO chat_members (chat_id, user_id) VALUES (?, ?)", chatID, userID)
+		_, err := db.c.Exec("INSERT INTO chat_members (chatId, userId) VALUES (?, ?)", chatID, userID)
 		if err != nil {
 			return 0, fmt.Errorf("errore nell'associare utenti alla chat: %w", err)
 		}

@@ -9,7 +9,7 @@ import (
 func (db *appdbimpl) UserIdExist(userId int) (bool, error) {
 
 	// Query SQL per verificare l'esistenza
-	query := "SELECT 1 FROM users_table WHERE id = ?"
+	query := "SELECT 1 FROM users_table WHERE userId = ?"
 
 	var exist int
 	err := db.c.QueryRow(query, userId).Scan(&exist)

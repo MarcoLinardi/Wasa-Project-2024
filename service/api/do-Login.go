@@ -36,22 +36,30 @@ func (rt *_router) doLogin(w http.ResponseWriter, r *http.Request, ps httprouter
 	}
 
 	// Simulazione: crea un identificatore per l'utente
-	// Qui puoi aggiungere logica per controllare se l'utente esiste già
 	var err error
 	LoginResponse.Identifier, err = rt.db.GetUserIdByName(requestBody.Name)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			// Devo creare l'utente ed inserirlo nel database
+			// Non trovato → creo nuovo utente
+			LoginResponse.Identifier, err = rt.db.CreateNewUser(requestBody.Name)
+			if err != nil {
+				ctx.Logger.WithError(err).Error("Error while creating new user")
+				http.Error(w, "Internal server error", http.StatusInternalServerError)
+				return
+			}
+			ctx.Logger.Infof("Created new user: %s (ID: %d)", requestBody.Name, LoginResponse.Identifier)
 		} else {
+			ctx.Logger.WithError(err).Error("Error while retrieving user ID by name")
 			http.Error(w, "Internal server error", http.StatusInternalServerError)
-			ctx.Logger.WithError(err).Error("Error while retriving user id by the user name")
 			return
 		}
+	} else {
+		ctx.Logger.Infof("User found: %s (ID: %d)", requestBody.Name, LoginResponse.Identifier)
 	}
 
 	// Invia la risposta al client
 	w.Header().Set("Content-Type", "application/json")
-	w.Header().Set("Authentication", fmt.Sprintf("bearerAuth: %d", LoginResponse.Identifier))
+	w.Header().Set("Authorization", fmt.Sprintf("Bearer %d", LoginResponse.Identifier))
 	w.WriteHeader(http.StatusCreated)
 	if err := json.NewEncoder(w).Encode(LoginResponse); err != nil {
 		ctx.Logger.Error("Failed to encode response:", err)

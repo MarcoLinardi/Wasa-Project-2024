@@ -8,7 +8,7 @@ import (
 func (db *appdbimpl) GetChats(userId int) ([]Chat, error) {
 
 	// Esegui la query per ottenere tutte le chat a cui l'utente partecipa
-	rows, err := db.c.Query("SELECT cm.chat_id, ch.name FROM chat_members cm JOIN chats_table ch ON cm.chat_id = ch.id WHERE cm.user_id = ?", userId)
+	rows, err := db.c.Query("SELECT ch.chatId, ch.name FROM chat_members cm JOIN chats_table ch ON cm.chatId = ch.chatId WHERE cm.userId = ? GROUP BY ch.chatId;", userId)
 	if err != nil {
 		return nil, fmt.Errorf("error querying chats: %w", err)
 	}
@@ -32,5 +32,4 @@ func (db *appdbimpl) GetChats(userId int) ([]Chat, error) {
 	}
 
 	return chats, nil
-
 }

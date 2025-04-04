@@ -41,7 +41,7 @@ type AppDatabase interface {
 	GetUserIdByName(name string) (int, error)
 	SetName(name string) error
 	UserIdExist(userId int) (bool, error)
-	CreateUser(name string) (int, error)
+	CreateNewUser(name string) (int, error)
 	UpdateUserPhoto(photo string, userId int) error
 	UpdateUsername(newName string, userId int) error
 	GetUsers() ([]User, error)
@@ -49,7 +49,7 @@ type AppDatabase interface {
 	CreateChat(name string, users []int) (int, error)
 	GetChatDetails(chatID int, userID int) (*Chat, error)
 	DeleteChat(chatID int) error
-	SaveMessage(msg Message) (int, error)
+	SaveMessage(chatID int, msg Message) (int, error)
 
 	Ping() error
 }
@@ -76,7 +76,6 @@ type Chat struct {
 type Message struct {
 	MessageID   int    `json:"messageId"`
 	SenderID    int    `json:"senderId"`
-	ChatID      int    `json:"chatId"`
 	Content     string `json:"content"`
 	Timestamp   string `json:"timestamp"`
 	Status      string `json:"status"`
@@ -95,9 +94,9 @@ func New(db *sql.DB) (AppDatabase, error) {
 	// TABELLA CHAT
 	err := db.QueryRow(`SELECT name FROM sqlite_master WHERE type='table' AND name='chats_table';`).Scan(&tableName)
 	if errors.Is(err, sql.ErrNoRows) {
-		sqlStmt := `CREATE TABLE chats_table (chat_id INTEGER NOT NULL PRIMARY KEY, 
+		sqlStmt := `CREATE TABLE chats_table (chatId INTEGER NOT NULL PRIMARY KEY, 
 												name TEXT
-												is_group BOOLEAN DEFAULT 0
+												isGroup BOOLEAN DEFAULT 0
 												);`
 		_, err = db.Exec(sqlStmt)
 		if err != nil {
@@ -108,11 +107,11 @@ func New(db *sql.DB) (AppDatabase, error) {
 	// TABELLA MEMBRI CHAT
 	err = db.QueryRow(`SELECT name FROM sqlite_master WHERE type='table' AND name='chat_members';`).Scan(&tableName)
 	if errors.Is(err, sql.ErrNoRows) {
-		sqlStmt := `CREATE TABLE chat_members (chat_id INTEGER NOT NULL,
-    											user_id INTEGER NOT NULL,
-												PRIMARY KEY (chat_id, user_id),
-												FOREIGN KEY (chat_id) REFERENCES chats_table(id) ON DELETE CASCADE,
-												FOREIGN KEY (user_id) REFERENCES users_table(userId) ON DELETE CASCADE
+		sqlStmt := `CREATE TABLE chat_members (chatId INTEGER NOT NULL,
+    											userId INTEGER NOT NULL,
+												PRIMARY KEY (chatId, userId),
+												FOREIGN KEY (chatId) REFERENCES chats_table(chatId) ON DELETE CASCADE,
+												FOREIGN KEY (userId) REFERENCES users_table(userId) ON DELETE CASCADE
 												);`
 		_, err = db.Exec(sqlStmt)
 		if err != nil {
@@ -137,13 +136,13 @@ func New(db *sql.DB) (AppDatabase, error) {
 	// TABELLA MESSAGES
 	err = db.QueryRow(`SELECT name FROM sqlite_master WHERE type='table' AND name='messages';`).Scan(&tableName)
 	if errors.Is(err, sql.ErrNoRows) {
-		sqlStmt := `CREATE TABLE messages (message_id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-										chat_id INTEGER NOT NULL,
-										sender_id INTEGER NOT NULL,
+		sqlStmt := `CREATE TABLE messages (messageId INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+										chatId INTEGER NOT NULL,
+										senderId INTEGER NOT NULL,
 										content TEXT NOT NULL,
 										timestamp TEXT NOT NULL,
-										FOREIGN KEY (chat_id) REFERENCES chats_table(id) ON DELETE CASCADE,
-										FOREIGN KEY (sender_id) REFERENCES users_table(userId) ON DELETE CASCADE
+										FOREIGN KEY (chatId) REFERENCES chats_table(chatId) ON DELETE CASCADE,
+										FOREIGN KEY (senderId) REFERENCES users_table(userId) ON DELETE CASCADE
 										);`
 
 		_, err = db.Exec(sqlStmt)
