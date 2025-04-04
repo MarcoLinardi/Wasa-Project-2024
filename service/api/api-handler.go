@@ -18,11 +18,11 @@ func (rt *_router) Handler() http.Handler {
 	// Chat operations
 	rt.router.GET("/chats", rt.wrap(rt.bearerAuth(rt.listOfChats))) // testato
 	rt.router.POST("/chats", rt.wrap(rt.bearerAuth(rt.createChat))) // testato
-	rt.router.GET("/chats/{ChatId}", rt.wrap(rt.bearerAuth(rt.detailsChat)))
-	rt.router.DELETE("/chats/{ChatId}", rt.wrap(rt.bearerAuth(rt.deleteChat)))
+	rt.router.GET("/chats/:ChatId", rt.wrap(rt.bearerAuth(rt.detailsChat)))
+	rt.router.DELETE("/chats/:ChatId", rt.wrap(rt.bearerAuth(rt.deleteChat)))
 
 	// Message Operations
-	rt.router.POST("/chats/{ChatId}/messages", rt.wrap(rt.bearerAuth(rt.sendMessage)))
+	rt.router.POST("/chats/:ChatId/messages", rt.wrap(rt.bearerAuth(rt.sendMessage)))
 
 	return rt.router
 }

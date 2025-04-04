@@ -9,7 +9,7 @@ func (db *appdbimpl) GetChatDetails(chatID int, userID int) (*Chat, error) {
 
 	// Verifica che l'utente sia membro della chat
 	var tmp int
-	check := `SELECT 1 FROM chat_members WHERE chat_id = ? AND user_id = ? LIMIT 1`
+	check := `SELECT 1 FROM chat_members WHERE chatId = ? AND userId = ? LIMIT 1`
 	err := db.c.QueryRow(check, chatID, userID).Scan(&tmp)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -20,19 +20,15 @@ func (db *appdbimpl) GetChatDetails(chatID int, userID int) (*Chat, error) {
 
 	// Recupera i dati della chat
 	chat := &Chat{}
-	query := `SELECT id, name, is_group FROM chats_table WHERE id = ?`
-	err = db.c.QueryRow(query, chatID).Scan(&chat.ChatID, &chat.Name, &chat.IsGroup)
+	query := `SELECT chatId, name FROM chats_table WHERE chatId = ?`
+	err = db.c.QueryRow(query, chatID).Scan(&chat.ChatID, &chat.Name)
 	if err != nil {
 		return nil, err
 	}
 
 	// Recupera i messaggi della chat
 	rows, err := db.c.Query(`
-		SELECT id, sender_id, content, timestamp
-		FROM messages
-		WHERE chat_id = ?
-		ORDER BY timestamp ASC
-	`, chatID)
+		SELECT messageId, senderId, content, timestamp FROM messages WHERE chatId = ? ORDER BY timestamp ASC`, chatID)
 	if err != nil {
 		return nil, err
 	}
