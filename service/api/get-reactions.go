@@ -1,0 +1,51 @@
+package api
+
+import (
+	"Wasa-Project-2024/service/api/reqcontext"
+	"encoding/json"
+	"net/http"
+	"strconv"
+
+	"github.com/julienschmidt/httprouter"
+)
+
+func (rt *_router) getMessageReactions(w http.ResponseWriter, r *http.Request, ps httprouter.Params, ctx *reqcontext.RequestContext) {
+	chatIDStr := ps.ByName("chatId")
+	msgIDStr := ps.ByName("msgId")
+
+	chatID, err := strconv.Atoi(chatIDStr)
+	if err != nil {
+		http.Error(w, `{"error": "Invalid chat ID"}`, http.StatusBadRequest)
+		return
+	}
+
+	messageID, err := strconv.Atoi(msgIDStr)
+	if err != nil {
+		http.Error(w, `{"error": "Invalid message ID"}`, http.StatusBadRequest)
+		return
+	}
+
+	// Controlla che il messaggio sia dentro alla chat
+	exists, err := rt.db.CheckMessageInChat(chatID, messageID)
+	if err != nil {
+		http.Error(w, `{"error": "Internal server error"}`, http.StatusInternalServerError)
+		ctx.Logger.WithError(err).Error("Error checking message in chat")
+		return
+	}
+	if !exists {
+		http.Error(w, `{"error": "Message does not belong to chat"}`, http.StatusBadRequest)
+		return
+	}
+
+	// Recupera le reazioni
+	reactions, err := rt.db.GetReactions(messageID)
+	if err != nil {
+		http.Error(w, `{"error": "Failed to retrieve reactions"}`, http.StatusInternalServerError)
+		ctx.Logger.WithError(err).Error("Failed to retrieve reactions")
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(reactions)
+}

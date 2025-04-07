@@ -46,12 +46,19 @@ type AppDatabase interface {
 	UpdateUsername(newName string, userId int) error
 	GetUsers() ([]User, error)
 	GetChats(userId int) ([]Chat, error)
-	CreateChat(name string, users []int) (int, error)
+	CreateChat(name string, users []int, isGroup bool) (int, error)
 	GetChatDetails(chatID int, userID int) (*Chat, error)
 	DeleteChat(chatID int) error
 	SaveMessage(chatID int, msg Message) (int, error)
 	GetAllMessages(chatID int) ([]Message, error)
 	UpdateMessagesStatus(chatID int, messageIDs []int, newStatus string) error
+	ForwardMessage(originalChatID, originalMsgID, destinationChatID, senderID int) error
+	AddReaction(messageID, userID int, reaction string) error
+	CheckMessageInChat(chatID, messageID int) (bool, error)
+	DeleteReaction(messageID, userID int) error
+	GetReactions(messageID int) ([]Reaction, error)
+	DeleteMessage(messageID int) error
+	AddMemberToGroup(chatID, userID int) error
 
 	Ping() error
 }
@@ -76,12 +83,19 @@ type Chat struct {
 }
 
 type Message struct {
-	MessageID   int    `json:"messageId"`
-	SenderID    int    `json:"senderId"`
-	Content     string `json:"content"`
-	Timestamp   string `json:"timestamp"`
-	Status      string `json:"status"`
-	IsForwarded bool   `json:"isForwarded"`
+	MessageID   int        `json:"messageId"`
+	SenderID    int        `json:"senderId"`
+	Content     string     `json:"content"`
+	Timestamp   string     `json:"timestamp"`
+	Status      string     `json:"status"`
+	IsForwarded bool       `json:"isForwarded"`
+	Reactions   []Reaction `json:"reactions"`
+}
+
+type Reaction struct {
+	MessageID int    `json:"messageId"`
+	UserID    int    `json:"userId"`
+	Reaction  string `json:"reaction"`
 }
 
 // New returns a new instance of AppDatabase based on the SQLite connection `db`.
@@ -143,7 +157,7 @@ func New(db *sql.DB) (AppDatabase, error) {
 										senderId INTEGER NOT NULL,
 										content TEXT NOT NULL,
 										timestamp TEXT NOT NULL,
-										status TEXT DEFAULT 'sent'
+										status TEXT DEFAULT 'sent',
 										FOREIGN KEY (chatId) REFERENCES chats_table(chatId) ON DELETE CASCADE,
 										FOREIGN KEY (senderId) REFERENCES users_table(userId) ON DELETE CASCADE
 										);`
@@ -151,6 +165,23 @@ func New(db *sql.DB) (AppDatabase, error) {
 		_, err = db.Exec(sqlStmt)
 		if err != nil {
 			return nil, fmt.Errorf("error creating messages table: %w", err)
+		}
+	}
+
+	// TABELLA REACTION
+	tableName = ""
+	err = db.QueryRow(`SELECT name FROM sqlite_master WHERE type='table' AND name='message_reactions';`).Scan(&tableName)
+	if errors.Is(err, sql.ErrNoRows) {
+		sqlStmt := `CREATE TABLE message_reactions (messageId INTEGER NOT NULL,
+  													userId INTEGER NOT NULL,
+  													reaction TEXT NOT NULL,
+													PRIMARY KEY (messageId, userId),
+													FOREIGN KEY (messageId) REFERENCES messages(messageId) ON DELETE CASCADE,
+													FOREIGN KEY (userId) REFERENCES users_table(userId) ON DELETE CASCADE
+												);`
+		_, err = db.Exec(sqlStmt)
+		if err != nil {
+			return nil, fmt.Errorf("error creating database structure: %w", err)
 		}
 	}
 

@@ -128,6 +128,20 @@ components:
           default: false
           description: If true, the message was forwarded
           example: true
+
+        reactions:
+          type: array
+          description: List of reactions to a message
+          items:
+            type: object
+            properties:
+              userId:
+                $ref: "#/components/parameters/UserId"
+              reaction:
+                type: string
+                description: Reaction emoji
+                example: "🔥"
+
       
   securitySchemes:
     bearerAuth:
@@ -724,7 +738,7 @@ paths:
         '404':
           description: Conversation or user not found
 
-  /chats/{ChatId}/messages/{MsgId}/reaction:
+  /chats/{ChatId}/messages/{MsgId}/reactions:
     parameters:
       - $ref: "#/components/parameters/ChatId" #ID of the conversation containing the message
       - $ref: "#/components/parameters/MsgId"  #ID of the original message
@@ -845,7 +859,52 @@ paths:
         
         '404':
           description: Message or reaction not found
-  
+
+    get:
+      tags:
+        - Message
+      summary: Retrieve all reactions to a specific message
+      description: |
+        Retrieves a list of all users who reacted to a specific message and their reactions (emojis).
+      operationId: getMessageReactions
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ChatId"
+        - $ref: "#/components/parameters/MsgId"
+      responses:
+        '200':
+          description: Successfully retrieved all reactions
+          content:
+            application/json:
+              schema:
+                type: array
+                description: List of reactions
+                items:
+                  type: object
+                  properties:
+                    userId:
+                      type: integer
+                      description: ID of the user who reacted
+                    reaction:
+                      type: string
+                      description: Emoji reaction
+                      example: "😂"
+              examples:
+                example:
+                  summary: Example of reactions
+                  value:
+                    - userId: 1
+                      reaction: "❤️"
+                    - userId: 2
+                      reaction: "😂"
+        '400':
+          description: Invalid request
+        '401':
+          description: Unauthorized
+        '500':
+          description: Internal server error
+
   /chats/{ChatId}/messages/{MsgId}:
     parameters:
       - $ref: "#/components/parameters/ChatId" #ID of the conversation containing the message
@@ -981,7 +1040,7 @@ paths:
     parameters:
       - $ref: "#/components/parameters/ChatId"
     
-    patch:
+    put:
       tags: 
         - Group
       summary: rename a group chat
