@@ -50,6 +50,8 @@ type AppDatabase interface {
 	GetChatDetails(chatID int, userID int) (*Chat, error)
 	DeleteChat(chatID int) error
 	SaveMessage(chatID int, msg Message) (int, error)
+	GetAllMessages(chatID int) ([]Message, error)
+	UpdateMessagesStatus(chatID int, messageIDs []int, newStatus string) error
 
 	Ping() error
 }
@@ -66,11 +68,11 @@ type User struct {
 }
 
 type Chat struct {
-	ChatID int    `json:"chatId"`
-	Name   string `json:"name"`
-	// Photo       Photo  `json:"photo"`
-	IsGroup  bool      `json:"isGroup"`
-	Messages []Message `json:"messages"`
+	ChatID  int    `json:"chatId"`
+	Name    string `json:"name"`
+	Photo   string `json:"photo"`
+	IsGroup bool   `json:"isGroup"`
+	Members []User `json:"participants"`
 }
 
 type Message struct {
@@ -141,6 +143,7 @@ func New(db *sql.DB) (AppDatabase, error) {
 										senderId INTEGER NOT NULL,
 										content TEXT NOT NULL,
 										timestamp TEXT NOT NULL,
+										status TEXT DEFAULT 'sent'
 										FOREIGN KEY (chatId) REFERENCES chats_table(chatId) ON DELETE CASCADE,
 										FOREIGN KEY (senderId) REFERENCES users_table(userId) ON DELETE CASCADE
 										);`

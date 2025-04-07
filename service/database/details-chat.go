@@ -26,21 +26,22 @@ func (db *appdbimpl) GetChatDetails(chatID int, userID int) (*Chat, error) {
 		return nil, err
 	}
 
-	// Recupera i messaggi della chat
-	rows, err := db.c.Query(`
-		SELECT messageId, senderId, content, timestamp FROM messages WHERE chatId = ? ORDER BY timestamp ASC`, chatID)
+	// Recupera i membri della chat
+	rows, err := db.c.Query(`SELECT u.userId, u.name, u.photo FROM chat_members cm JOIN users_table u ON cm.userId = u.userId WHERE cm.chatId = ?`, chatID)
+
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
 	for rows.Next() {
-		var msg Message
-		if err := rows.Scan(&msg.MessageID, &msg.SenderID, &msg.Content, &msg.Timestamp); err != nil {
+		var user User
+		if err := rows.Scan(&user.UserID, &user.Name, &user.Photo); err != nil {
 			return nil, err
 		}
-		chat.Messages = append(chat.Messages, msg)
+		chat.Members = append(chat.Members, user)
 	}
 
 	return chat, nil
+
 }

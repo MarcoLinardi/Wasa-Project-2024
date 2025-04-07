@@ -10,7 +10,7 @@ import (
 )
 
 func (rt *_router) detailsChat(w http.ResponseWriter, r *http.Request, ps httprouter.Params, ctx *reqcontext.RequestContext) {
-	chatIDStr := ps.ByName("ChatId")
+	chatIDStr := ps.ByName("chatId")
 	chatID, err := strconv.Atoi(chatIDStr)
 	if err != nil {
 		http.Error(w, "ID chat non valido", http.StatusBadRequest)

@@ -16,13 +16,15 @@ func (rt *_router) Handler() http.Handler {
 	rt.router.GET("/users", rt.wrap(rt.bearerAuth(rt.listOfUsers))) // testato
 
 	// Chat operations
-	rt.router.GET("/chats", rt.wrap(rt.bearerAuth(rt.listOfChats))) // testato
-	rt.router.POST("/chats", rt.wrap(rt.bearerAuth(rt.createChat))) // testato
-	rt.router.GET("/chats/:ChatId", rt.wrap(rt.bearerAuth(rt.detailsChat)))
-	rt.router.DELETE("/chats/:ChatId", rt.wrap(rt.bearerAuth(rt.deleteChat)))
+	rt.router.GET("/chats", rt.wrap(rt.bearerAuth(rt.listOfChats)))           // testato
+	rt.router.POST("/chats", rt.wrap(rt.bearerAuth(rt.createChat)))           // testato
+	rt.router.GET("/chats/:chatId", rt.wrap(rt.bearerAuth(rt.detailsChat)))   // testato
+	rt.router.DELETE("/chats/:chatId", rt.wrap(rt.bearerAuth(rt.deleteChat))) // testato
 
 	// Message Operations
-	rt.router.POST("/chats/:ChatId/messages", rt.wrap(rt.bearerAuth(rt.sendMessage)))
+	rt.router.POST("/chats/:chatId/messages", rt.wrap(rt.bearerAuth(rt.sendMessage))) // testato
+	rt.router.GET("/chats/:chatId/messages/status", rt.wrap(rt.bearerAuth(rt.getAllMessages)))
+	rt.router.PUT("/chats/:chatId/messages/status/update", rt.wrap(rt.bearerAuth(rt.updateMessagesStatus)))
 
 	return rt.router
 }

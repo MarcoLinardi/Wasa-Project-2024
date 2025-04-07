@@ -4,7 +4,7 @@ import "fmt"
 
 func (db *appdbimpl) DeleteChat(chatID int) error {
 
-	result, err := db.c.Exec(`DELETE FROM chats WHERE chat_id = ?`, chatID)
+	result, err := db.c.Exec(`DELETE FROM chats_table WHERE chatId = ?`, chatID)
 	if err != nil {
 		return fmt.Errorf("errore durante l'eliminazione della chat: %w", err)
 	}

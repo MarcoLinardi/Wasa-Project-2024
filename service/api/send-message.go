@@ -6,13 +6,15 @@ import (
 	"encoding/json"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/julienschmidt/httprouter"
 )
 
 func (rt *_router) sendMessage(w http.ResponseWriter, r *http.Request, ps httprouter.Params, ctx *reqcontext.RequestContext) {
+
 	// Recupera l'ID della chat dall'URL
-	chatIDStr := ps.ByName("ChatId")
+	chatIDStr := ps.ByName("chatId")
 	chatID, err := strconv.Atoi(chatIDStr)
 	if err != nil {
 		http.Error(w, `{"error": "Invalid chat ID"}`, http.StatusBadRequest)
@@ -26,8 +28,10 @@ func (rt *_router) sendMessage(w http.ResponseWriter, r *http.Request, ps httpro
 		return
 	}
 
-	// Prendi l'ID dell'utente autenticato (ipotizziamo che sia in `ctx.UserID`)
 	msg.SenderID = ctx.UserID
+
+	// Aggiungi automaticamente il timestamp
+	msg.Timestamp = time.Now().Format("2006-01-02 15:04:05")
 
 	// Salva il messaggio nel database
 	messageID, err := rt.db.SaveMessage(chatID, msg)

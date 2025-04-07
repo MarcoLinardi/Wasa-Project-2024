@@ -9,7 +9,7 @@ func (db *appdbimpl) SaveMessage(chatID int, msg Message) (int, error) {
 
 	// Controlla se la chat esiste
 	var exists bool
-	err := db.c.QueryRow("SELECT EXISTS(SELECT 1 FROM chats_table WHERE id = ?)", chatID).Scan(&exists)
+	err := db.c.QueryRow("SELECT EXISTS(SELECT 1 FROM chats_table WHERE chatId = ?)", chatID).Scan(&exists)
 	if err != nil {
 		return 0, fmt.Errorf("errore nella verifica della chat: %w", err)
 	}
@@ -19,7 +19,7 @@ func (db *appdbimpl) SaveMessage(chatID int, msg Message) (int, error) {
 
 	// Controlla che il mittente faccia parte della chat
 	var isMember bool
-	err = db.c.QueryRow("SELECT EXISTS(SELECT 1 FROM chat_members WHERE chat_id = ? AND user_id = ?)", chatID, msg.SenderID).Scan(&isMember)
+	err = db.c.QueryRow("SELECT EXISTS(SELECT 1 FROM chat_members WHERE chatId = ? AND userId = ?)", chatID, msg.SenderID).Scan(&isMember)
 	if err != nil {
 		return 0, fmt.Errorf("errore nella verifica dell'utente nella chat: %w", err)
 	}
@@ -28,8 +28,8 @@ func (db *appdbimpl) SaveMessage(chatID int, msg Message) (int, error) {
 	}
 
 	// Inserisce il messaggio nel database
-	result, err := db.c.Exec("INSERT INTO messages_table (chat_id, sender, content) VALUES (?, ?, ?)",
-		chatID, msg.SenderID, msg.Content,
+	result, err := db.c.Exec("INSERT INTO messages (chatId, senderId, content, timestamp) VALUES (?, ?, ?, ?)",
+		chatID, msg.SenderID, msg.Content, msg.Timestamp,
 	)
 	if err != nil {
 		return 0, fmt.Errorf("errore nell'inserimento del messaggio: %w", err)
