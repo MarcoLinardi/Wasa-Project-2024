@@ -10,7 +10,7 @@ import (
 
 func (rt *_router) deleteMessage(w http.ResponseWriter, r *http.Request, ps httprouter.Params, ctx *reqcontext.RequestContext) {
 	chatIDStr := ps.ByName("chatId")
-	msgIDStr := ps.ByName("msgId")
+	msgIDStr := ps.ByName("messageId")
 
 	chatID, err := strconv.Atoi(chatIDStr)
 	if err != nil {

@@ -7,10 +7,10 @@ func (db *appdbimpl) AddMemberToGroup(chatID, userID int) error {
 	// Prima controllo che la chat sia un gruppo
 	var isGroup bool
 	err := db.c.QueryRow(`
-		SELECT isGroup
-		FROM chats_table
-		WHERE chatId = ?
-	`, chatID).Scan(&isGroup)
+							SELECT isGroup
+							FROM chats_table
+							WHERE chatId = ?
+						`, chatID).Scan(&isGroup)
 	if err != nil {
 		return fmt.Errorf("error checking chat type: %w", err)
 	}

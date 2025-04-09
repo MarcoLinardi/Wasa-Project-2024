@@ -20,14 +20,16 @@ func (db *appdbimpl) GetChatDetails(chatID int, userID int) (*Chat, error) {
 
 	// Recupera i dati della chat
 	chat := &Chat{}
-	query := `SELECT chatId, name FROM chats_table WHERE chatId = ?`
-	err = db.c.QueryRow(query, chatID).Scan(&chat.ChatID, &chat.Name)
+	query := `SELECT chatId, name, photo, isGroup FROM chats_table WHERE chatId = ?`
+	err = db.c.QueryRow(query, chatID).Scan(&chat.ChatID, &chat.Name, &chat.Photo, &chat.IsGroup)
 	if err != nil {
 		return nil, err
 	}
 
 	// Recupera i membri della chat
-	rows, err := db.c.Query(`SELECT u.userId, u.name, u.photo FROM chat_members cm JOIN users_table u ON cm.userId = u.userId WHERE cm.chatId = ?`, chatID)
+	rows, err := db.c.Query(`SELECT u.userId, u.name, u.photo 
+							FROM chat_members cm JOIN users_table u ON cm.userId = u.userId 
+							WHERE cm.chatId = ?`, chatID)
 
 	if err != nil {
 		return nil, err

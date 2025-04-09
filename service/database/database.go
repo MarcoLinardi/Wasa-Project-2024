@@ -56,9 +56,11 @@ type AppDatabase interface {
 	AddReaction(messageID, userID int, reaction string) error
 	CheckMessageInChat(chatID, messageID int) (bool, error)
 	DeleteReaction(messageID, userID int) error
-	GetReactions(messageID int) ([]Reaction, error)
 	DeleteMessage(messageID int) error
 	AddMemberToGroup(chatID, userID int) error
+	RemoveMemberFromGroup(chatID int, userID int) error
+	SetGroupName(chatID int, newName string) error
+	SetGroupPhoto(chatID int, newPhoto string) error
 
 	Ping() error
 }
@@ -111,8 +113,9 @@ func New(db *sql.DB) (AppDatabase, error) {
 	err := db.QueryRow(`SELECT name FROM sqlite_master WHERE type='table' AND name='chats_table';`).Scan(&tableName)
 	if errors.Is(err, sql.ErrNoRows) {
 		sqlStmt := `CREATE TABLE chats_table (chatId INTEGER NOT NULL PRIMARY KEY, 
-												name TEXT
-												isGroup BOOLEAN DEFAULT 0
+												name TEXT,
+												isGroup BOOLEAN DEFAULT 0,
+												photo TEXT NOT NULL DEFAULT ''
 												);`
 		_, err = db.Exec(sqlStmt)
 		if err != nil {
@@ -140,8 +143,8 @@ func New(db *sql.DB) (AppDatabase, error) {
 	err = db.QueryRow(`SELECT name FROM sqlite_master WHERE type='table' AND name='users_table';`).Scan(&tableName)
 	if errors.Is(err, sql.ErrNoRows) {
 		sqlStmt := `CREATE TABLE users_table (userId INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-												name TEXT
-												photo TEXT
+												name TEXT,
+												photo TEXT NOT NULL DEFAULT ''
 												);`
 		_, err = db.Exec(sqlStmt)
 		if err != nil {
@@ -158,6 +161,7 @@ func New(db *sql.DB) (AppDatabase, error) {
 										content TEXT NOT NULL,
 										timestamp TEXT NOT NULL,
 										status TEXT DEFAULT 'sent',
+										isForwarded BOOLEAN DEFAULT 0, 
 										FOREIGN KEY (chatId) REFERENCES chats_table(chatId) ON DELETE CASCADE,
 										FOREIGN KEY (senderId) REFERENCES users_table(userId) ON DELETE CASCADE
 										);`

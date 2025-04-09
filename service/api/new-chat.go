@@ -46,7 +46,7 @@ func (rt *_router) createChat(w http.ResponseWriter, r *http.Request, ps httprou
 		return
 	}
 
-	// 👇 Crea la chat
+	// Crea la chat
 	chatID, err := rt.db.CreateChat(request.Name, request.Users, request.IsGroup)
 	if err != nil {
 		http.Error(w, `{"error": "Failed to create chat"}`, http.StatusInternalServerError)
@@ -54,7 +54,7 @@ func (rt *_router) createChat(w http.ResponseWriter, r *http.Request, ps httprou
 		return
 	}
 
-	// 👇 Risposta
+	// Risposta
 	response := CreateChatResponse{ChatID: chatID}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)

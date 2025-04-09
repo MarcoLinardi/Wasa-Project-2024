@@ -11,7 +11,7 @@ import (
 
 func (rt *_router) forwardMessage(w http.ResponseWriter, r *http.Request, ps httprouter.Params, ctx *reqcontext.RequestContext) {
 	originalChatIDStr := ps.ByName("chatId")
-	originalMsgIDStr := ps.ByName("msgId")
+	originalMsgIDStr := ps.ByName("messageId")
 
 	originalChatID, err := strconv.Atoi(originalChatIDStr)
 	if err != nil {
