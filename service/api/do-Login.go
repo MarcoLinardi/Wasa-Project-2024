@@ -13,6 +13,10 @@ import (
 
 // DoLogin è l'handler per l'endpoint /login
 func (rt *_router) doLogin(w http.ResponseWriter, r *http.Request, ps httprouter.Params, ctx *reqcontext.RequestContext) {
+	if r.Method == "OPTIONS" {
+		w.WriteHeader(http.StatusOK)
+		return
+	}
 	var requestBody = struct {
 		Name string `json:"name"` // Il nome dell'utente passato nella richiesta
 	}{}
