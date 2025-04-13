@@ -12,14 +12,11 @@ export default {
       this.loading = true;
       this.errormsg = null;
       try {
-        const response = await this.$axios.post('/login', {
-          name: this.username
-        });
-        console.log('Login successo!', response.data);
-        
-        // Esempio: potresti salvare un token o reindirizzare
-        // localStorage.setItem('token', response.data.token);
-        // this.$router.push('/home');
+        const response = await this.$axios.post('/login', { name: this.username });
+        localStorage.setItem('token', response.data.identifier);
+
+        console.log('Login avvenuto con successo!', response.data);
+        this.$router.push('/home');
 
       } catch (error) {
         console.error('Errore di login', error);
@@ -57,7 +54,7 @@ export default {
   </style>
 
   <style scoped>
- .container {
+.container {
   display: flex;
   justify-content: center;
   align-items: center;

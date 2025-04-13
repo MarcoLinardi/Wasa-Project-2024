@@ -8,7 +8,7 @@ import (
 func (rt *_router) Handler() http.Handler {
 
 	// Login operations
-	rt.router.POST("/login", rt.wrap(rt.doLogin)) // testato
+	rt.router.POST("/login", rt.wrap(rt.doLogin)) // testato + frontend
 
 	// User operations
 	rt.router.PUT("/user/name", rt.wrap(rt.bearerAuth(rt.setMyUserName))) // testato

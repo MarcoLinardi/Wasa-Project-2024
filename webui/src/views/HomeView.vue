@@ -1,53 +1,103 @@
 <script>
+import Sidebar from '../components/Sidebar.vue';
+import ChatArea from '../components/ChatArea.vue';
 export default {
-	data: function() {
-		return {
-			errormsg: null,
-			loading: false,
-			some_data: null,
-		}
-	},
-	methods: {
-		async refresh() {
-			this.loading = true;
-			this.errormsg = null;
-			try {
-				let response = await this.$axios.get("/");
-				this.some_data = response.data;
-			} catch (e) {
-				this.errormsg = e.toString();
-			}
-			this.loading = false;
-		},
-	},
-	mounted() {
-		this.refresh()
-	}
+  components: {
+    Sidebar,
+    ChatArea
+  },
+  data() {
+    return {
+      mode: 'chats',      // chats oppure users
+      chatList: [],
+      userList: [],
+      selectedChat: null,
+      messages: [],
+    };
+  },
+  methods: {
+    async switchMode(newMode) {
+      this.mode = newMode;
+      if (newMode === 'chats') {
+        await this.refreshChats();
+      } else if (newMode === 'users') {
+        await this.refreshUsers();
+      }
+    },
+    async refreshChats() {
+      try {
+        const response = await this.$axios.get("/chats");
+        this.chatList = response.data;
+      } catch (e) {
+        console.error(e);
+      }
+    },
+    async refreshUsers() {
+      try {
+        const response = await this.$axios.get("/users");
+        this.userList = response.data;
+      } catch (e) {
+        console.error(e);
+      }
+    },
+    async selectChat(chat) {
+      this.selectedChat = chat;
+      await this.loadMessages(chat.id);
+    },
+    async loadMessages(chatId) {
+      try {
+        const response = await this.$axios.get(`/chats/${chatId}/messages`);
+        this.messages = response.data;
+      } catch (e) {
+        console.error(e);
+      }
+    },
+    async startChat(user) {
+      console.log("Start chat with user:", user);
+      // Qui puoi creare una nuova chat POST /chats
+    },
+    async createGroup() {
+      console.log("Create new group!");
+      // Qui puoi aprire una modale per creare un gruppo
+    },
+    logout() {
+      localStorage.removeItem('token');
+      this.$router.push('/login');
+      console.log('Logout effettuato');
+    }
+  },
+  mounted() {
+    this.refreshChats(); // Quando monti carichi le chat
+  }
 }
 </script>
 
 <template>
-	<div>
-		<div
-			class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-			<h1 class="h2">Home page</h1>
-			<div class="btn-toolbar mb-2 mb-md-0">
-				<div class="btn-group me-2">
-					<button type="button" class="btn btn-sm btn-outline-secondary" @click="refresh">
-						Refresh
-					</button>
-					<button type="button" class="btn btn-sm btn-outline-secondary" @click="exportList">
-						Export
-					</button>
-				</div>
-				<div class="btn-group me-2">
-					<button type="button" class="btn btn-sm btn-outline-primary" @click="newItem">
-						New
-					</button>
-				</div>
-			</div>
-		</div>
-
-		<ErrorMsg v-if="errormsg" :msg="errormsg"></ErrorMsg>
+	<div class="home-container">
+		<Sidebar 
+			:mode="mode"
+			:chatList="chatList"
+			:userList="userList"
+			@selectChat="selectChat"
+			@startChat="startChat"
+			@createGroup="createGroup"
+			@logout="logout"
+			@switchMode="switchMode"
+			/>
+  
+	  <ChatArea 
+		:selectedChat="selectedChat"
+		:messages="messages"
+	  />
 	</div>
-</template>
+  </template>
+  
+  <style scoped>
+  .home-container {
+	display: flex;
+	height: 100vh;
+	width: 100vw;
+	overflow: hidden;
+  }
+  </style>
+  
