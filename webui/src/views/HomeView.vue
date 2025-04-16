@@ -13,37 +13,10 @@ export default {
       userList: [],
       selectedChat: null,
       messages: [],
+      chatId: -1,
     };
   },
   methods: {
-    async switchMode(newMode) {
-      this.mode = newMode;
-      if (newMode === 'chats') {
-        await this.refreshChats();
-      } else if (newMode === 'users') {
-        await this.refreshUsers();
-      }
-    },
-    async refreshChats() {
-      try {
-        const response = await this.$axios.get("/chats");
-        this.chatList = response.data;
-      } catch (e) {
-        console.error(e);
-      }
-    },
-    async refreshUsers() {
-      try {
-        const response = await this.$axios.get("/users");
-        this.userList = response.data;
-      } catch (e) {
-        console.error(e);
-      }
-    },
-    async selectChat(chat) {
-      this.selectedChat = chat;
-      await this.loadMessages(chat.id);
-    },
     async loadMessages(chatId) {
       try {
         const response = await this.$axios.get(`/chats/${chatId}/messages`);
@@ -52,22 +25,6 @@ export default {
         console.error(e);
       }
     },
-    async startChat(user) {
-      console.log("Start chat with user:", user);
-      // Qui puoi creare una nuova chat POST /chats
-    },
-    async createGroup() {
-      console.log("Create new group!");
-      // Qui puoi aprire una modale per creare un gruppo
-    },
-    logout() {
-      localStorage.removeItem('token');
-      this.$router.push('/login');
-      console.log('Logout effettuato');
-    }
-  },
-  mounted() {
-    this.refreshChats(); // Quando monti carichi le chat
   }
 }
 </script>

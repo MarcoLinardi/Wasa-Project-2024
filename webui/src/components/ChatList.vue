@@ -1,7 +1,10 @@
 <script>
 export default {
   props: {
-    chats: Array
+    chats: {
+      type: Array,
+      required: true
+    }
   }
 }
 </script>

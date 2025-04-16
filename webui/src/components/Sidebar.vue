@@ -1,25 +1,61 @@
 <script>
-import ChatList from './ChatList.vue';
-import UserList from './UserList.vue';
 
 export default {
-  components: {
-    ChatList,
-    UserList
-  },
-  props: {
-    mode: {
-      type: String,
-      required: true
-    },
-    chatList: {
-      type: Array,
-      required: true
-    },
-    userList: {
-      type: Array,
-      required: true
+
+  data: function() {
+    return{
+      mode: "chat",
+      userList: [],
+      chatList: [],
     }
+  },
+
+  methods: {
+    async switchMode(newMode) {
+      this.mode = newMode;
+      if (newMode === 'chats') {
+        await this.refreshChats();
+      } else if (newMode === 'users') {
+        await this.refreshUsers();
+      }
+    },
+    async refreshChats() {
+      try {
+        const response = await this.$axios.get("/chats");
+        this.chatList = response.data.chats;
+      } catch (e) {
+        console.error(e);
+      }
+    },
+    async refreshUsers() {
+      try {
+        const response = await this.$axios.get("/users");
+        this.userList = response.data.users;
+      } catch (e) {
+        console.error(e);
+      }
+    },
+    async selectChat(chat) {
+      this.selectedChat = chat;
+      await this.loadMessages(chat.id);
+    },
+    async startChat(user) {
+      console.log("Start chat with user:", user);
+      // Qui puoi creare una nuova chat POST /chats
+    },
+    async createGroup() {
+      console.log("Create new group!");
+      // Qui puoi aprire una modale per creare un gruppo
+    },
+    logout() {
+      localStorage.removeItem('token');
+      this.$router.push('/login');
+      console.log('Logout effettuato');
+    }
+  },
+  mounted() {
+    this.refreshChats(); // Quando monti carichi le chat
+    this.refreshUsers();
   }
 }
 </script>
@@ -28,8 +64,8 @@ export default {
     <div class="sidebar">
       <!-- TOP: bottoni Chat / Nuova Chat -->
       <div class="sidebar-top">
-        <button class="sidebar-button" @click="$emit('switchMode', 'chats')">Chat</button>
-        <button class="sidebar-button" @click="$emit('switchMode', 'users')">Nuova Chat</button>
+        <button class="sidebar-button" @click="this.switchMode('chats')">Chat</button>
+        <button class="sidebar-button" @click="this.switchMode('users')">Nuova Chat</button>
       </div>
   
       <!-- MIDDLE: ChatList o UserList -->
@@ -49,7 +85,7 @@ export default {
   
       <!-- BOTTOM: Logout -->
       <div class="sidebar-bottom">
-        <button class="logout-button" @click="$emit('logout')">Logout</button>
+        <button class="logout-button" @click="this.logout">Logout</button>
       </div>
     </div>
   </template>  

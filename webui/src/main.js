@@ -16,5 +16,9 @@ const app = createApp(App)
 app.config.globalProperties.$axios = axios;
 app.component("ErrorMsg", ErrorMsg);
 app.component("LoadingSpinner", LoadingSpinner);
+app.component("Sidebar", Sidebar)
+app.component("ChatArea", ChatArea)
+app.component("ChatList", ChatList)
+app.component("UserList", UserList)
 app.use(router)
 app.mount('#app')
