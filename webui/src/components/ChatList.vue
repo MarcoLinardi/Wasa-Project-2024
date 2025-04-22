@@ -3,6 +3,7 @@ export default {
   props: {
     chats: {
       type: Array,
+      default: () => [],
       required: true
     }
   }

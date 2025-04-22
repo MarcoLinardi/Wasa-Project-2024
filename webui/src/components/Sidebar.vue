@@ -4,7 +4,7 @@ export default {
 
   data: function() {
     return{
-      mode: "chat",
+      mode: "chats",
       userList: [],
       chatList: [],
     }
@@ -31,30 +31,23 @@ export default {
       try {
         const response = await this.$axios.get("/users");
         this.userList = response.data.users;
+        this.userList.sort((a, b) => {
+
+          if (a.name < b.name) {
+            return -1;
+          }
+          if (a.name > b.name) {
+            return 1;
+          }
+          return 0;
+        })
       } catch (e) {
         console.error(e);
       }
     },
-    async selectChat(chat) {
-      this.selectedChat = chat;
-      await this.loadMessages(chat.id);
-    },
-    async startChat(user) {
-      console.log("Start chat with user:", user);
-      // Qui puoi creare una nuova chat POST /chats
-    },
-    async createGroup() {
-      console.log("Create new group!");
-      // Qui puoi aprire una modale per creare un gruppo
-    },
-    logout() {
-      localStorage.removeItem('token');
-      this.$router.push('/login');
-      console.log('Logout effettuato');
-    }
   },
   mounted() {
-    this.refreshChats(); // Quando monti carichi le chat
+    this.refreshChats();
     this.refreshUsers();
   }
 }
@@ -76,16 +69,16 @@ export default {
           @selectChat="$emit('selectChat', $event)"
         />
         <UserList 
-          v-else-if="mode === 'users'" 
+          v-if="mode === 'users'" 
           :users="userList" 
           @startChat="$emit('startChat', $event)"
-          @createGroup="$emit('createGroup')"
+          @createGroup="$emit('createGroup', $event)"
         />
       </div>
   
       <!-- BOTTOM: Logout -->
       <div class="sidebar-bottom">
-        <button class="logout-button" @click="this.logout">Logout</button>
+        <button class="sidebar-button" @click="$emit('logout')">Logout</button>
       </div>
     </div>
   </template>  
@@ -122,7 +115,7 @@ export default {
   }
   
   .sidebar-button {
-    background-color: #d9d9d9;
+    background-color: rgb(217, 128, 91);
     border: none;
     padding: 0.5rem 1rem;
     border-radius: 10px;
@@ -133,21 +126,17 @@ export default {
   }
   
   .sidebar-button:hover {
-    background-color: #cccccc;
+    background-color: rgb(180, 90, 58);
   }
   
   .logout-button {
     background-color: rgb(217, 128, 91);
-    color: white;
+    color: black;
     border: none;
     padding: 0.5rem 1rem;
     border-radius: 10px;
     cursor: pointer;
     font-weight: bold;
-  }
-
-  .logout-button:hover {
-    background-color: rgb(180, 90, 58);
   }
   </style>
   

@@ -28,6 +28,18 @@ func (rt *_router) createChat(w http.ResponseWriter, r *http.Request, ps httprou
 		return
 	}
 
+	authenticatedUserID := ctx.UserID
+	found := false
+	for _, id := range request.Users {
+		if id == authenticatedUserID {
+			found = true
+			break
+		}
+	}
+	if !found {
+		request.Users = append(request.Users, authenticatedUserID)
+	}
+
 	if request.Name == "" || len(request.Users) == 0 {
 		http.Error(w, `{"error": "Missing chat name or users"}`, http.StatusBadRequest)
 		ctx.Logger.Error("Chat name or users list missing in request")
@@ -45,6 +57,10 @@ func (rt *_router) createChat(w http.ResponseWriter, r *http.Request, ps httprou
 		ctx.Logger.Error("Group with not enough members")
 		return
 	}
+
+	//if !request.IsGroup && request.Name != "" {
+	//	request.Name = ""
+	//}
 
 	// Crea la chat
 	chatID, err := rt.db.CreateChat(request.Name, request.Users, request.IsGroup)
