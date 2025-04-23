@@ -34,12 +34,12 @@ export default {
         this.userList.sort((a, b) => {
 
           if (a.name < b.name) {
-            return -1;
+            return -1; // a viene prima di b
           }
           if (a.name > b.name) {
-            return 1;
+            return 1; // b viene prima di a
           }
-          return 0;
+          return 0; // a e b sono uguali
         })
       } catch (e) {
         console.error(e);
