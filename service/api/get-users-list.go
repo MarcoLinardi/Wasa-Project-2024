@@ -17,7 +17,7 @@ func (rt *_router) listOfUsers(w http.ResponseWriter, r *http.Request, ps httpro
 	}
 
 	// Recupera gli utenti dal database
-	users, err := rt.db.GetUsers()
+	users, err := rt.db.GetUsers(ctx.UserID)
 	if err != nil {
 		http.Error(w, `{"error": "Internal server error"}`, http.StatusInternalServerError)
 		ctx.Logger.WithError(err).Error("Internal server error")

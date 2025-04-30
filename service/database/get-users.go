@@ -5,10 +5,10 @@ import (
 )
 
 // GetUsers recupera tutti gli utenti dal database
-func (db *appdbimpl) GetUsers() ([]User, error) {
+func (db *appdbimpl) GetUsers(userToIgnore int) ([]User, error) {
 
 	// Esegui la query per ottenere tutti gli utenti
-	rows, err := db.c.Query("SELECT userId, name, photo FROM users_table")
+	rows, err := db.c.Query("SELECT userId, name, photo FROM users_table WHERE userId != ?", userToIgnore)
 	if err != nil {
 		return nil, fmt.Errorf("error querying users: %w", err)
 	}

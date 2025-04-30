@@ -44,9 +44,10 @@ type AppDatabase interface {
 	CreateNewUser(name string) (int, error)
 	UpdateUserPhoto(photo string, userId int) error
 	UpdateUsername(newName string, userId int) error
-	GetUsers() ([]User, error)
+	GetUsers(userToIgnore int) ([]User, error)
 	GetChats(userId int) ([]Chat, error)
 	CreateChat(name string, users []int, isGroup bool) (int, error)
+	FindPrivateChat(user1ID, user2ID int) (int, error)
 	GetChatDetails(chatID int, userID int) (*Chat, error)
 	DeleteChat(chatID int) error
 	SaveMessage(chatID int, msg Message) (int, error)
