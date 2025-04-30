@@ -12,7 +12,7 @@ export default {
       this.loading = true;
       this.errormsg = null;
       try {
-        const response = await this.$axios.post('/login', { name: this.username });
+        const response = await this.$axios.post(__API_URL__ + '/login', { name: this.username });
         localStorage.setItem('token', response.data.identifier);
 
         console.log('Login avvenuto con successo!', response.data);
