@@ -1,5 +1,5 @@
 <script>
-
+import axiosInstance from "@/services/axios";
 export default {
 
   data: function() {
@@ -21,7 +21,7 @@ export default {
     },
     async refreshChats() {
       try {
-        const response = await this.$axios.get("/chats");
+        const response = await axiosInstance.get("/chats");
         this.chatList = response.data.chats;
       } catch (e) {
         console.error(e);
@@ -29,7 +29,7 @@ export default {
     },
     async refreshUsers() {
       try {
-        const response = await this.$axios.get("/users");
+        const response = await axiosInstance.get("/users");
         this.userList = response.data.users;
         this.userList.sort((a, b) => {
 
@@ -71,8 +71,8 @@ export default {
         <UserList 
           v-if="mode === 'users'" 
           :users="userList" 
-          @startChat="$emit('startChat', $event)"
           @createGroup="$emit('createGroup', $event)"
+          @selectChat = "$emit('selectChat', $event)"
         />
       </div>
   
@@ -87,12 +87,10 @@ export default {
   .sidebar {
     display: flex;
     flex-direction: column;
-    height: 100vh;
-    width: 30%;
+    width: 350px;
+    min-width: 250px;
     background-color: rgb(221, 172, 116);
-    border-right: 1px solid #ddd;
-    padding: 1rem;
-    box-sizing: border-box;
+    justify-content: space-between;
   }
   
   .sidebar-top {
@@ -110,6 +108,7 @@ export default {
   
   .sidebar-bottom {
     margin-top: auto;
+    margin-bottom: 1rem;
     display: flex;
     justify-content: center;
   }
@@ -128,15 +127,6 @@ export default {
   .sidebar-button:hover {
     background-color: rgb(180, 90, 58);
   }
-  
-  .logout-button {
-    background-color: rgb(217, 128, 91);
-    color: black;
-    border: none;
-    padding: 0.5rem 1rem;
-    border-radius: 10px;
-    cursor: pointer;
-    font-weight: bold;
-  }
+
   </style>
   

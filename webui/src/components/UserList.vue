@@ -24,17 +24,18 @@ export default {
       };
     },
     handleUserClick(user) {
-    if (this.creatingGroup) {
-      const index = this.group.participants.indexOf(user.userId);
-      if (index === -1) {
-        this.group.participants.push(user.userId);
+      console.log("user selezionato: " + user.name)
+      if (this.creatingGroup) {
+        const index = this.group.participants.indexOf(user.userId);
+        if (index === -1) {
+          this.group.participants.push(user.userId);
+        } else {
+          this.group.participants.splice(index, 1);
+        }
       } else {
-        this.group.participants.splice(index, 1);
+        this.$emit("selectChat", user);
       }
-    } else {
-      this.$emit("startChat", user);
-    }
-  },
+    },
     confirmGroup() {
       if (!this.group.name || this.group.participants.length < 1) {
         alert("Inserisci un nome e seleziona almeno un partecipante");
