@@ -5,7 +5,8 @@ info:
   title: Wasa Text
   description: |-
     An API for a messaging app that allows users
-    to send, receive, and manage messages and groups.
+    to send, receive, and manage messages 
+      type:messages and groups.
   version: 0.0.23
   
 components:
@@ -75,7 +76,12 @@ components:
             $ref: "#/components/schemas/User/properties/userId"
         
         messages:
-          $ref: "#/components/schemas/Message"
+          type: array
+          minItems: 0
+          maxItems: 1000
+          description: List of messages
+          items: 
+            $ref: "#/components/schemas/Message"
     
     Message:
       type: object
@@ -573,10 +579,6 @@ paths:
         '404':
           description: Conversation not found
 
-  /chats/{chat_id}/messages/status:
-    parameters:
-      - $ref: "#/components/parameters/ChatId"
-
     get:
       tags:
         - Message
@@ -597,10 +599,10 @@ paths:
                 type: object
                 description: Schema of all messages
                 properties:
-                  messagelist:
+                  messages:
                     type: array
                     minItems: 0
-                    maxItems: 100
+                    maxItems: 1000
                     description: Schema of all messages
                     items:
                       $ref: "#/components/schemas/Message"
@@ -627,9 +629,10 @@ paths:
                       timestamp: "2024-11-27T10:32:00Z"
                       status: "read"
 
-  /chats/{chat_id}/messages/status/update:
+  /chats/{chat_id}/messages/{msg_id}/status:
     parameters:
           - $ref: "#/components/parameters/ChatId"
+          - $ref: "#/components/parameters/MsgId"
 
     put:
       tags:
