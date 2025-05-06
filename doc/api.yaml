@@ -46,7 +46,7 @@ components:
         chatId:
           type: integer
           minimum: 1
-          maximum: 100
+          maximum: 1000
           description: Unique ID of a chat
         
         name:
@@ -90,7 +90,7 @@ components:
         messageId:
           type: integer
           minimum: 1
-          maximum: 10000
+          maximum: 9000
           example: 3
           description: Unique ID of a message
         
@@ -103,7 +103,7 @@ components:
         content:
           type: string
           minLength: 1
-          maxLength: 500
+          maxLength: 1000
           pattern: "^.*$"
           example: "Hi, i'm marco"
           description: Content of the message
