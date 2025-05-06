@@ -20,5 +20,11 @@ func (db *appdbimpl) getParticipants(chatId int) ([]User, error) {
 		}
 		participants = append(participants, user)
 	}
+
+	// Verifica se ci sono errori durante l'iterazione
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
 	return participants, nil
 }

@@ -1,6 +1,9 @@
 package database
 
-import "fmt"
+import (
+	"fmt"
+	"log"
+)
 
 func (db *appdbimpl) UpdateMessagesStatus(chatID int, messageIDs []int, newStatus string) error {
 	tx, err := db.c.Begin()
@@ -17,7 +20,9 @@ func (db *appdbimpl) UpdateMessagesStatus(chatID int, messageIDs []int, newStatu
 	for _, messageID := range messageIDs {
 		_, err := stmt.Exec(newStatus, chatID, messageID)
 		if err != nil {
-			tx.Rollback()
+			if err := tx.Rollback(); err != nil {
+				log.Printf("error rolling back transaction: %v", err)
+			}
 			return fmt.Errorf("error updating message status: %w", err)
 		}
 	}

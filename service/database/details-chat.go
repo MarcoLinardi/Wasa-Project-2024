@@ -30,7 +30,6 @@ func (db *appdbimpl) GetChatDetails(chatID int, userID int) (*Chat, error) {
 	rows, err := db.c.Query(`SELECT u.userId, u.name, u.photo 
 							FROM chat_members cm JOIN users_table u ON cm.userId = u.userId 
 							WHERE cm.chatId = ?`, chatID)
-
 	if err != nil {
 		return nil, err
 	}
@@ -44,6 +43,10 @@ func (db *appdbimpl) GetChatDetails(chatID int, userID int) (*Chat, error) {
 		chat.Members = append(chat.Members, user)
 	}
 
-	return chat, nil
+	// Verifica se ci sono errori durante l'iterazione
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
 
+	return chat, nil
 }

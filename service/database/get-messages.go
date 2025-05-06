@@ -43,8 +43,12 @@ func (db *appdbimpl) GetAllMessages(chatID int) ([]Message, error) {
 		}
 		reactionRows.Close()
 
-		msg.Reactions = reactions
+		// Verifica se ci sono errori durante l'iterazione
+		if err := reactionRows.Err(); err != nil {
+			return nil, fmt.Errorf("error iterating reactions: %w", err)
+		}
 
+		msg.Reactions = reactions
 		messages = append(messages, msg)
 	}
 
