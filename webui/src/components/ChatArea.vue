@@ -24,8 +24,8 @@ export default {
 
     async handleFirstMessage({ user, content }) {
       try {
-        console.log("User della funzione handleFirstMessage: " + user)
-        const newChatId = await createPrivateChat(user); // crea la chat
+        console.log("User della funzione handleFirstMessage: " + this.selectedUser.name)
+        const newChatId = await createPrivateChat(this.selectedUser); // crea la chat
         try {
           await sendMessage(newChatId, content); // invia il primo messaggio
 
@@ -53,13 +53,10 @@ export default {
       const text = this.messageText.trim();
       if (!text) return;
 
+      console.log("Funzione handleSend: " + this.selectedUser.name)
       if (this.selectedChat) {
         console.log("Selected Chat: " + this.selectedChat.chatId)
         // Se la chat esiste già, invia il messaggio normalmente
-        this.$emit("handleSendMessage", { chatId: this.selectedChat.chatId, content: text });
-
-      } else if (this.selectedUser && this.selectedChat) {
-        // Se la chat esiste già e viene selezionata dalla user list, invia normalmente
         this.$emit("handleSendMessage", { chatId: this.selectedChat.chatId, content: text });
 
       } else if (this.selectedUser && !this.selectedChat) {

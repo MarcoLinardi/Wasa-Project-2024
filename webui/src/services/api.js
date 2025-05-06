@@ -26,7 +26,7 @@ export async function deleteChat(chatId) {
 // Crea una nuova chat privata
 export async function createPrivateChat(user) {
   try {
-    console.log("User della funzione createPrivateChat: " + user)
+    console.log("User della funzione createPrivateChat: " + user.name)
     const res = await axiosInstance.post(`/chats`, {
       name: user.name,
       users: [user.userId],

@@ -15,7 +15,7 @@ export default {
         const response = await this.$axios.post(__API_URL__ + '/login', { name: this.username });
         localStorage.setItem('token', response.data.identifier);
 
-        console.log('Login avvenuto con successo!', response.data);
+        console.log('Login avvenuto con successo!' + response.data);
         this.$router.push('/home');
 
       } catch (error) {
