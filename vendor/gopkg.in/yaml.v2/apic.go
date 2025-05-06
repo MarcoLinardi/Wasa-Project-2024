@@ -143,7 +143,7 @@ func yaml_emitter_set_canonical(emitter *yaml_emitter_t, canonical bool) {
 	emitter.canonical = canonical
 }
 
-//// Set the indentation increment.
+// // Set the indentation increment.
 func yaml_emitter_set_indent(emitter *yaml_emitter_t, indent int) {
 	if indent < 2 || indent > 9 {
 		indent = 2
@@ -169,13 +169,13 @@ func yaml_emitter_set_break(emitter *yaml_emitter_t, line_break yaml_break_t) {
 	emitter.line_break = line_break
 }
 
-///*
+// /*
 // * Destroy a token object.
 // */
 //
-//YAML_DECLARE(void)
-//yaml_token_delete(yaml_token_t *token)
-//{
+// YAML_DECLARE(void)
+// yaml_token_delete(yaml_token_t *token)
+// {
 //    assert(token);  // Non-NULL token object expected.
 //
 //    switch (token.type)
@@ -207,9 +207,9 @@ func yaml_emitter_set_break(emitter *yaml_emitter_t, line_break yaml_break_t) {
 //    }
 //
 //    memset(token, 0, sizeof(yaml_token_t));
-//}
+// }
 //
-///*
+// *
 // * Check if a string is a valid UTF-8 sequence.
 // *
 // * Check 'reader.c' for more details on UTF-8 encoding.
