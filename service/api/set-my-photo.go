@@ -6,6 +6,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
+	"log"
 	"net/http"
 
 	"github.com/julienschmidt/httprouter"
@@ -59,5 +60,7 @@ func (rt *_router) setMyPhoto(w http.ResponseWriter, r *http.Request, _ httprout
 	// Risposta di successo
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte(`{"success": "Photo updated successfully"}`))
+	if _, err := w.Write([]byte(`{"message": "Photo updated successfully"}`)); err != nil {
+		log.Printf("error writing response: %v", err)
+	}
 }

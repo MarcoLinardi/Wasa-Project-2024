@@ -3,6 +3,7 @@ package api
 import (
 	"Wasa-Project-2024/service/api/reqcontext"
 	"encoding/json"
+	"log"
 	"net/http"
 	"strconv"
 
@@ -41,5 +42,7 @@ func (rt *_router) updateMessagesStatus(w http.ResponseWriter, r *http.Request, 
 	}
 
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte(`{"message": "Messages status updated successfully"}`))
+	if _, err := w.Write([]byte(`{"message": "Messages status updated successfully"}`)); err != nil {
+		log.Printf("error writing response: %v", err)
+	}
 }

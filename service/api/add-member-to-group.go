@@ -3,6 +3,7 @@ package api
 import (
 	"Wasa-Project-2024/service/api/reqcontext"
 	"encoding/json"
+	"log"
 	"net/http"
 	"strconv"
 
@@ -45,5 +46,7 @@ func (rt *_router) addMemberToGroup(w http.ResponseWriter, r *http.Request, ps h
 	}
 
 	w.WriteHeader(http.StatusCreated)
-	w.Write([]byte(`{"message": "User added to group successfully"}`))
+	if _, err := w.Write([]byte(`{"message": "User added to group successfully"}`)); err != nil {
+		log.Printf("error writing response: %v", err)
+	}
 }

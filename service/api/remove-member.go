@@ -2,6 +2,7 @@ package api
 
 import (
 	"Wasa-Project-2024/service/api/reqcontext"
+	"log"
 	"net/http"
 	"strconv"
 
@@ -32,5 +33,7 @@ func (rt *_router) removeMemberToGroup(w http.ResponseWriter, r *http.Request, p
 	}
 
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte(`{"message": "Member removed successfully"}`))
+	if _, err := w.Write([]byte(`{"message": "Member removed successfully"}`)); err != nil {
+		log.Printf("error writing response: %v", err)
+	}
 }

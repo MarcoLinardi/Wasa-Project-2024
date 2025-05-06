@@ -3,6 +3,7 @@ package api
 import (
 	"Wasa-Project-2024/service/api/reqcontext"
 	"encoding/json"
+	"log"
 	"net/http"
 	"strconv"
 
@@ -30,5 +31,7 @@ func (rt *_router) getAllMessages(w http.ResponseWriter, r *http.Request, ps htt
 	// Risposta JSON
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(messages)
+	if err := json.NewEncoder(w).Encode(messages); err != nil {
+		log.Printf("error encoding JSON response: %v", err)
+	}
 }

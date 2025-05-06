@@ -3,6 +3,7 @@ package api
 import (
 	"Wasa-Project-2024/service/api/reqcontext"
 	"encoding/json"
+	"log"
 	"net/http"
 	"strconv"
 
@@ -40,5 +41,7 @@ func (rt *_router) setGroupName(w http.ResponseWriter, r *http.Request, ps httpr
 	}
 
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte(`{"message": "Group chat renamed successfully"}`))
+	if _, err := w.Write([]byte(`{"message": "Group chat renamed successfully"}`)); err != nil {
+		log.Printf("error writing response: %v", err)
+	}
 }

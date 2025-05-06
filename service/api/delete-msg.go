@@ -2,6 +2,7 @@ package api
 
 import (
 	"Wasa-Project-2024/service/api/reqcontext"
+	"log"
 	"net/http"
 	"strconv"
 
@@ -45,5 +46,7 @@ func (rt *_router) deleteMessage(w http.ResponseWriter, r *http.Request, ps http
 	}
 
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte(`{"message": "Message deleted successfully"}`))
+	if _, err := w.Write([]byte(`{"message": "Message deleted successfully"}`)); err != nil {
+		log.Printf("error writing response: %v", err)
+	}
 }

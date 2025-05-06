@@ -82,7 +82,7 @@ func (rt *_router) createChat(w http.ResponseWriter, r *http.Request, ps httprou
 	}
 
 	// Crea la chat
-	chatID, err := rt.db.CreateChat(request.Name, request.Users, request.IsGroup)
+	chatID, err := rt.db.CreateChat(request.Name, request.Users, request.IsGroup, authenticatedUserID)
 	if err != nil {
 		http.Error(w, `{"error": "Failed to create chat"}`, http.StatusInternalServerError)
 		ctx.Logger.WithError(err).Error("Database error in CreateChat")

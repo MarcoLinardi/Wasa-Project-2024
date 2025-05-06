@@ -4,6 +4,7 @@ import (
 	"Wasa-Project-2024/service/api/reqcontext"
 	"Wasa-Project-2024/service/database"
 	"encoding/json"
+	"log"
 	"net/http"
 	"strconv"
 	"time"
@@ -44,5 +45,8 @@ func (rt *_router) sendMessage(w http.ResponseWriter, r *http.Request, ps httpro
 	// Risposta di successo
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(map[string]int{"message_id": messageID})
+	if err := json.NewEncoder(w).Encode(map[string]int{"message_id": messageID}); err != nil {
+		log.Printf("error encoding JSON response: %v", err)
+	}
+
 }

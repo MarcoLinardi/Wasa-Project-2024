@@ -3,6 +3,7 @@ package api
 import (
 	"Wasa-Project-2024/service/api/reqcontext"
 	"encoding/json"
+	"log"
 	"net/http"
 	"strconv"
 
@@ -42,5 +43,7 @@ func (rt *_router) forwardMessage(w http.ResponseWriter, r *http.Request, ps htt
 	}
 
 	w.WriteHeader(http.StatusCreated)
-	w.Write([]byte(`{"message": "Message forwarded successfully"}`))
+	if _, err := w.Write([]byte(`{"message": "Message forwarded successfully"}`)); err != nil {
+		log.Printf("error writing response: %v", err)
+	}
 }

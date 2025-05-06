@@ -6,6 +6,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"errors"
+	"log"
 	"net/http"
 
 	"github.com/julienschmidt/httprouter"
@@ -45,5 +46,7 @@ func (rt *_router) setMyUserName(w http.ResponseWriter, r *http.Request, ps http
 	// Risposta di successo
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte(`{"success": "Username changed successfully"}`))
+	if _, err := w.Write([]byte(`{"message": "Username changed successfully"}`)); err != nil {
+		log.Printf("error writing response: %v", err)
+	}
 }

@@ -3,6 +3,7 @@ package api
 import (
 	"Wasa-Project-2024/service/api/reqcontext"
 	"encoding/json"
+	"log"
 	"net/http"
 
 	"github.com/julienschmidt/httprouter"
@@ -27,7 +28,9 @@ func (rt *_router) listOfUsers(w http.ResponseWriter, r *http.Request, ps httpro
 	// Rispondi con i dati in formato JSON
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(map[string]interface{}{
+	if err := json.NewEncoder(w).Encode(map[string]interface{}{
 		"users": users,
-	})
+	}); err != nil {
+		log.Printf("error encoding JSON response: %v", err)
+	}
 }

@@ -2,7 +2,7 @@ package api
 
 import (
 	"Wasa-Project-2024/service/api/reqcontext"
-	"encoding/json"
+	"log"
 	"net/http"
 	"strconv"
 
@@ -29,5 +29,8 @@ func (rt *_router) deleteChat(w http.ResponseWriter, r *http.Request, ps httprou
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(map[string]string{"message": "Chat deleted successfully"})
+	w.WriteHeader(http.StatusCreated)
+	if _, err := w.Write([]byte(`{"message": "Chat deleted successfully"}`)); err != nil {
+		log.Printf("error writing response: %v", err)
+	}
 }

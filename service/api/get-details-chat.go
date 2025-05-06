@@ -3,6 +3,7 @@ package api
 import (
 	"Wasa-Project-2024/service/api/reqcontext"
 	"encoding/json"
+	"log"
 	"net/http"
 	"strconv"
 
@@ -26,5 +27,7 @@ func (rt *_router) detailsChat(w http.ResponseWriter, r *http.Request, ps httpro
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(chat)
+	if err := json.NewEncoder(w).Encode(chat); err != nil {
+		log.Printf("error encoding JSON response: %v", err)
+	}
 }
