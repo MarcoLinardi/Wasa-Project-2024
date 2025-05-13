@@ -1,9 +1,16 @@
 <script>
-import { sendMessage, deleteChat, createPrivateChat } from "@/services/api"; 
+import axiosInstance from "@/services/axios";
+
 export default {
   props: {
-    selectedChat: Object,
-    selectedUser: Object,
+    selectedUser: {
+      type: Object,
+      required: true
+    },
+    selectedChat: {
+      type: Object,
+      required: true
+    }
   },
   data() {
     return {
@@ -11,8 +18,10 @@ export default {
       messages: []
     };
   },
+  mounted() {
+    this.loadMessages(this.chatId)
+  },
   methods: {
-
     async loadMessages(chatId) {
       try {
         const response = await axiosInstance.get(`/chats/${chatId}/messages/status`);
@@ -21,50 +30,6 @@ export default {
         console.error(e);
       }
     },
-
-    async handleFirstMessage({ user, content }) {
-      try {
-        console.log("User della funzione handleFirstMessage: " + this.selectedUser.name)
-        const newChatId = await createPrivateChat(this.selectedUser); // crea la chat
-        try {
-          await sendMessage(newChatId, content); // invia il primo messaggio
-
-          // aggiorna frontend
-          this.selectedChat = {
-            chatId: newChatId,
-            name: user.name,
-            isGroup: false
-          };
-          this.selectedUser = null;
-          await this.loadMessages(newChatId);
-          this.chatList.push(this.selectedChat);
-
-        } catch (errorMessage) {
-          await deleteChat(newChatId); // cancella la chat se errore invio
-          console.error("Errore invio primo messaggio, chat eliminata:", errorMessage);
-        }
-
-      } catch (e) {
-        console.error("Errore durante creazione chat:", e);
-      }
-    },
-
-    handleSend() {
-      const text = this.messageText.trim();
-      if (!text) return;
-
-      console.log("Funzione handleSend: " + this.selectedUser.name)
-      if (this.selectedChat) {
-        console.log("Selected Chat: " + this.selectedChat.chatId)
-        // Se la chat esiste già, invia il messaggio normalmente
-        this.$emit("handleSendMessage", { chatId: this.selectedChat.chatId, content: text });
-
-      } else if (this.selectedUser && !this.selectedChat) {
-        // Se non c'è chat ma c'è un utente selezionato, creala
-        this.handleFirstMessage(this.selectedUser, text );
-      }
-      this.messageText = ""; // svuota campo input
-      },
     }
   }
 </script>
@@ -74,28 +39,14 @@ export default {
     
     <!-- HEADER -->
     <div class="chat-header">
+      <img :src="selectedUser.photo" class="user-photo" />
       <h2 v-if="selectedChat">{{ selectedChat.name }}</h2>
-      <h2 v-else-if="selectedUser">{{ selectedUser.name }}</h2>
-      <h2 v-else>Nessuna chat selezionata</h2>
+      <h2 v-if="selectedUser">{{ selectedUser.name }}</h2>
     </div>
 
     <!-- BODY -->
     <div class="chat-body">
-      <template v-if="messages && messages.length > 0">
-        <div v-for="message in messages" :key="message.id" class="message">
-          {{ message.content }}
-        </div>
-      </template>
-      <template v-else-if="selectedUser && !selectedChat">
-        <div class="preview-message">
-          Inizia una nuova chat con <strong>{{ selectedUser.name }}</strong>
-        </div>
-      </template>
-      <template v-else>
-        <div class="preview-message">
-          Seleziona una chat per iniziare
-        </div>
-      </template>
+      
     </div>
 
     <!-- FOOTER sempre visibile -->
@@ -106,10 +57,11 @@ export default {
           placeholder="Scrivi un messaggio..."
           @keyup.enter="handleSend"
         />
-        <button class="send-button" @click="handleSend">
-          <svg xmlns="http://www.w3.org/2000/svg" height="24" width="24" viewBox="0 0 24 24">
-            <path fill="#ffffff" d="M2 21l21-9L2 3v7l15 2-15 2z"/>
-          </svg>
+        <button class="send-button" title="Scegli foto" >
+          <svg class="feather"><use href="/feather-sprite-v4.29.0.svg#image"/></svg>
+        </button>
+        <button class="send-button" title="Invia" @click="handleSend">
+          <svg class="feather"><use href="/feather-sprite-v4.29.0.svg#send"/></svg>
         </button>
       </div>
     </div>
@@ -129,65 +81,47 @@ export default {
 
 .chat-header {
   height: 80px;
-  background-color: #f0f2f5;
-  border-bottom: 1px solid #ddd;
+  background-color: rgb(210, 180, 140);
+  border-bottom: 1px solid #444;
   display: flex;
   align-items: center;
-  justify-content: center;
   padding: 0 1rem;
   box-sizing: border-box;
   flex-shrink: 0;
 }
 
 .chat-header h2 {
-  font-size: 1.2rem;
+  font-size: 1.3rem;
   margin: 0;
   color: #333;
-  white-space: nowrap;      /* evita spezzamenti strani */
-  overflow: hidden;         /* evita sbordamenti */
-  text-overflow: ellipsis;  /* aggiunge "..." se troppo lungo */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.user-photo {
+  width: 4rem;
+  height: 4rem;
+  object-fit: cover;
+  border-radius: 50%;
+  margin-right: 1rem;
 }
 
 .chat-body {
   flex-grow: 1; 
   overflow-y: auto;
-  background-color: rgb(210, 180, 140);
+  background-color: rgb(221, 221, 150);
   display: flex;
   justify-content: center;
   align-items: center;
   padding: 1rem;
 }
 
-.message {
-  background-color: white;
-  padding: 0.5rem 1rem;
-  border-radius: 20px;
-  margin-bottom: 0.5rem;
-  max-width: 60%;
-  word-wrap: break-word;
-}
-
-.chat-body.preview {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  color: #333;
-  font-size: 1.2rem;
-  font-weight: 500;
-  background-color: rgb(210, 180, 140);
-}
-
-.preview-message {
-  background-color: transparent;
-  padding: 1.5rem 1.5rem;
-  align-items: center;
-}
-
-
 .chat-footer {
-  background-color: rgb(221, 172, 116);
+  background-color: rgb(210, 180, 140);
   padding: 0.5rem;
-  border-top: 1px solid #ddd;
+  width: 100%;
+  border-top: 1px solid #444;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -201,7 +135,6 @@ export default {
   display: flex;
   align-items: center;
   width: 100%;
-  max-width: 800px;
   padding: 0.3rem 0.8rem;
   border-radius: 30px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
@@ -218,27 +151,22 @@ export default {
 }
 
 .send-button {
-  background-color: transparent;
   border: none;
   border-radius: 50%;
-  padding: 0.6rem;
-  margin-left: 0.5rem;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background-color 0.3s ease;
+  height: 2.5rem;
+  width: 2.5rem;
+  background-color: transparent;
 }
 
 .send-button:hover {
-  background-color: rgb(224, 160, 100);
-  transition: background-color 0.3s ease;
+  background-color: rgb(200, 170, 130);
 }
 
 .send-button svg {
-  width: 24px;
-  height: 24px;
+  transition: transform 0.2s ease;
 }
 
-
+.send-button:hover svg {
+  transform: scale(1.25);
+}
 </style>

@@ -14,8 +14,12 @@ export default {
       try {
         const response = await this.$axios.post(__API_URL__ + '/login', { name: this.username });
         localStorage.setItem('token', response.data.identifier);
+        localStorage.setItem('user', JSON.stringify(response.data.user));
 
-        console.log('Login avvenuto con successo!' + response.data);
+        console.log('Login avvenuto con successo!', response.data);
+        console.log('Token salvato:', localStorage.getItem('token'));
+        console.log('Utente salvato:', localStorage.getItem('user'));
+
         this.$router.push('/home');
 
       } catch (error) {

@@ -1,11 +1,3 @@
-<template>
-  <div class="user-item p-4 border-b cursor-pointer">
-    <!-- Immagine utente -->
-    <img :src="user.photo" alt="User" class="user-avatar" />
-    <div class="font-semibold">{{ user.name }}</div>
-  </div>
-</template>
-  
 <script>
   export default{
     props: {
@@ -15,12 +7,23 @@
         }
     },
     mounted() {
-      console.log("UserItem mounted:", this.user);
+
+    },
+    methods: {
+      handleClick() {
+        this.$emit('select-user', this.user);
+    }
     }
   }
   
 </script>
-  
+
+<template>
+  <div class="user-item p-4 border-b cursor-pointer" @click="handleClick" >
+    <img :src="user.photo" class="user-avatar" />
+    <div class="font-semibold">{{ user.name }}</div>
+  </div>
+</template>
   
 <style scoped>
   .user-item {
@@ -30,6 +33,7 @@
     border-radius: 6px;
     cursor: pointer;
     gap: 12px;
+    height: 4rem;
     transition: background-color 0.2s;
   }
 

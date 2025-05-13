@@ -1,31 +1,54 @@
 <script>
 import axiosInstance from "@/services/axios";
 import UserItem from "../components/UserItem.vue";
+import UserProfile from "../components/UserProfile.vue";
+import ChatArea from "../components/ChatArea.vue";
+
 export default {
   data() {
     return {
       users: [],
       chats: [],
       selectedSection: "chat",
+      loggedUser: null,
+      selectedUser: null,
+      showUserProfile: false,
+      showChatArea: false,
+      isUserLogged: false,
+      selectedChat: null,
     }
   },
+  components: {
+    UserItem,
+    UserProfile,
+    ChatArea
+  },
   mounted() {
-    this.loadUsers();  // Carica gli utenti quando il componente è montato
+    this.loadUsers();
+    this.loadLoggedUser();
   },
 
   methods: {
     logout() {
       localStorage.removeItem('token');
+      localStorage.removeItem('user')
       this.$router.push('/login');
       console.log('Logout effettuato');
+    },
+    loadLoggedUser() {
+      const userData = localStorage.getItem('user');
+      if (userData) {
+        this.loggedUser = JSON.parse(userData);
+        console.log("Utente loggato caricato:", this.loggedUser);
+      } else {
+        console.warn("Nessun utente trovato in localStorage");
+      }
     },
     async loadUsers() {
       try {
         const response = await axiosInstance.get("/users");
         this.users = response.data.users;
-        console.log("lista utenti: " + this.users)
         this.users.sort((a, b) => {
-
           if (a.name < b.name) {
             return -1; // a viene prima di b
           }
@@ -38,6 +61,33 @@ export default {
         console.error(e);
       }
     },
+    openUserProfile() {
+      this.selectedUser = this.loggedUser;
+      this.showUserProfile = true;
+      this.isUserLogged = true;
+      this.showChatArea = false;
+    },
+    closeUserProfile() {
+      this.showUserProfile = false;
+      this.selectedUser = null;
+      this.isUserLogged = false
+    },
+    openChat(user) {
+      this.selectedUser = user;
+      this.selectedChat = null;
+      this.showUserProfile = false;
+      this.showChatArea = true;
+    },
+    handleUserClick(user) {
+      this.selectedUser = user;
+      this.showUserProfile = true;
+      this.showChatArea = false;
+      this.isUserLogged = false;
+    },
+    updateUserName(newName) {
+    console.log("Nuovo nome ricevuto:", newName);
+    this.loggedUser.name = newName;
+  },
   }
 }
 </script>
@@ -45,9 +95,7 @@ export default {
 
 <template>
   <div class="home-container">
-    <!-- Sidebar -->
     <div class="sidebar-wrapper">
-      <!-- Bottoni per scegliere tra Chat e Utenti -->
       <div class="buttons">
         <button 
           class="btn" 
@@ -77,36 +125,43 @@ export default {
 
       <!-- Lista Utenti -->
       <div v-if="selectedSection === 'user'" class="user-list">
-        <!-- Bottone Crea Gruppo Fisso -->
-        <button class="btn-create-group">Crea Gruppo</button>
+        <!-- Bottone Crea Gruppo -->
+        <button class="btn-create-group">
+          <svg class="feather"><use href="/feather-sprite-v4.29.0.svg#users"/></svg> Crea Gruppo
+        </button>
 
-        <!-- Mappa degli utenti per visualizzarli come componenti UserItem -->
+        <!-- Lista degli utenti come componenti UserItem -->
         <UserItem 
           v-for="user in users" 
           :key="user.id" 
           :user="user" 
+          @select-user="handleUserClick"
         />
       </div>
 
-      <!-- Altri controlli -->
+      <!-- Bottoni di Controllo -->
       <div class="control-options">
-        <button class="control-btn" @click="logout">Logout</button>
+        <button class="control-btn" title="Profilo"  @click="openUserProfile">
+          <svg class="feather"><use href="/feather-sprite-v4.29.0.svg#user"/> </svg></button>
+        <button class="control-btn" title="Logout" @click="logout">
+          <svg class="feather"><use href="/feather-sprite-v4.29.0.svg#log-out"/> </svg></button>
       </div>
     </div>
 
     <!-- Chat Area -->
     <div class="chat-wrapper">
-      <div class="chat-header">
-        <h2>Seleziona una chat</h2>
-      </div>
-      <div class="chat-messages">
-        <div class="message">
-          <strong>Utente:</strong> Messaggio di esempio
-        </div>
-      </div>
-      <div class="chat-input">
-        <input type="text" placeholder="Scrivi un messaggio..." />
-      </div>
+      <UserProfile 
+        v-if="showUserProfile" 
+        :user="selectedUser"
+        :isUserLogged="isUserLogged"
+        @close="closeUserProfile"
+        @start-new-chat="openChat"
+      />
+      <ChatArea
+        v-if="showChatArea"
+        :selectedUser="selectedUser"
+        :selectedChat="selectedChat"
+      />
     </div>
   </div>
 </template>
@@ -145,13 +200,11 @@ export default {
   border: none;
   transition: background-color 0.3s ease;
 }
-
 .btn:hover {
-  background-color: rgb(202, 115, 79); /* Colore di hover leggermente più scuro */
+  background-color: rgb(202, 115, 79);
 }
-
 .btn.active {
-  background-color: rgb(180, 90, 58); /* Colore attivo (scuro) */
+  background-color: rgb(180, 90, 58);
 }
 
 .chat-list, .user-list {
@@ -165,7 +218,6 @@ export default {
   border-radius: 5px;
   cursor: pointer;
 }
-
 .chat-item:hover {
   background-color: rgb(217, 128, 91);
 }
@@ -175,9 +227,11 @@ export default {
   display: flex;
   justify-content: center;
   width: 100%;
+  justify-content: space-around;
 }
-
 .control-btn {
+  display: flex;
+  justify-content: center;
   padding: 12px;
   background-color: rgb(217, 128, 91);
   color: white;
@@ -185,10 +239,8 @@ export default {
   cursor: pointer;
   margin-top: 10px;
   border: none;
-  width: 100px;
-  text-align: center;        
+  width: 3.5rem;
 }
-
 .control-btn:hover {
   background-color: rgb(202, 115, 79);
 }
@@ -204,7 +256,6 @@ export default {
   border: none;
   transition: background-color 0.3s ease;
 }
-
 .btn-create-group:hover {
   background-color: rgb(202, 115, 79);
 }
@@ -212,38 +263,8 @@ export default {
 /* Chat Area */
 .chat-wrapper {
   flex-grow: 1;
-  background-color: #f5f5f5;
+  background-color: rgb(210, 180, 140);
   display: flex;
   flex-direction: column;
-}
-
-.chat-header {
-  background-color: rgb(210, 180, 140);
-  padding: 15px;
-  border-bottom: 1px solid #ccc;
-}
-
-.chat-messages {
-  flex-grow: 1;
-  padding: 20px;
-  overflow-y: auto;
-}
-
-.message {
-  margin-bottom: 10px;
-}
-
-.chat-input {
-  background-color: rgb(210, 180, 140);
-  padding: 15px;
-  border-top: 1px solid #ccc;
-}
-
-.chat-input input {
-  width: 100%;
-  padding: 12px;
-  border-radius: 10px;
-  border: 1px solid rgb(70, 70, 70);
-  background-color: transparent;
 }
 </style>

@@ -5,6 +5,7 @@ import axios from './services/axios.js';
 import ErrorMsg from './components/ErrorMsg.vue'
 import LoadingSpinner from './components/LoadingSpinner.vue'
 import UserItem from './components/UserItem.vue';
+import UserProfile from './components/UserProfile.vue';
 
 import './assets/dashboard.css'
 import './assets/main.css'
