@@ -2,6 +2,7 @@ package api
 
 import (
 	"Wasa-Project-2024/service/api/reqcontext"
+	"Wasa-Project-2024/service/database"
 	"database/sql"
 	"encoding/json"
 	"errors"
@@ -11,18 +12,18 @@ import (
 	"github.com/julienschmidt/httprouter"
 )
 
-// DoLogin è l'handler per l'endpoint /login
 func (rt *_router) doLogin(w http.ResponseWriter, r *http.Request, ps httprouter.Params, ctx *reqcontext.RequestContext) {
 	if r.Method == "OPTIONS" {
 		w.WriteHeader(http.StatusOK)
 		return
 	}
 	var requestBody = struct {
-		Name string `json:"name"` // Il nome dell'utente passato nella richiesta
+		Name string `json:"name"`
 	}{}
 
 	var LoginResponse = struct {
-		Identifier int `json:"identifier"`
+		Identifier int           `json:"identifier"`
+		User       database.User `json:"user"`
 	}{}
 
 	// Decodifica il body JSON della richiesta
@@ -39,7 +40,7 @@ func (rt *_router) doLogin(w http.ResponseWriter, r *http.Request, ps httprouter
 		return
 	}
 
-	// Simulazione: crea un identificatore per l'utente
+	// Crea un identificatore per l'utente
 	var err error
 	LoginResponse.Identifier, err = rt.db.GetUserIdByName(requestBody.Name)
 	if err != nil {
@@ -60,6 +61,16 @@ func (rt *_router) doLogin(w http.ResponseWriter, r *http.Request, ps httprouter
 	} else {
 		ctx.Logger.Infof("User found: %s (ID: %d)", requestBody.Name, LoginResponse.Identifier)
 	}
+
+	ctx.Logger.Infof("Looking up user with ID: %d", LoginResponse.Identifier)
+
+	user, err := rt.db.GetUserById(LoginResponse.Identifier)
+	if err != nil {
+		ctx.Logger.WithError(err).Error("Failed to retrieve user data")
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+	LoginResponse.User = user
 
 	// Invia la risposta al client
 	w.Header().Set("Content-Type", "application/json")

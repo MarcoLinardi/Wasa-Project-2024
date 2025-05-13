@@ -11,9 +11,9 @@ func (rt *_router) Handler() http.Handler {
 	rt.router.POST("/login", rt.wrap(rt.doLogin)) // testato + frontend
 
 	// User operations
-	rt.router.PUT("/user/name", rt.wrap(rt.bearerAuth(rt.setMyUserName))) // testato
+	rt.router.PUT("/user/name", rt.wrap(rt.bearerAuth(rt.setMyUserName))) // testato + frontend
 	rt.router.PUT("/user/photo", rt.wrap(rt.bearerAuth(rt.setMyPhoto)))   // testato
-	rt.router.GET("/users", rt.wrap(rt.bearerAuth(rt.listOfUsers)))       // testato
+	rt.router.GET("/users", rt.wrap(rt.bearerAuth(rt.listOfUsers)))       // testato + frontend
 
 	// Chat operations
 	rt.router.GET("/chats", rt.wrap(rt.bearerAuth(rt.listOfChats)))           // testato

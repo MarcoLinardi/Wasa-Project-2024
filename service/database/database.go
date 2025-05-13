@@ -41,6 +41,7 @@ type AppDatabase interface {
 	GetUserIdByName(name string) (int, error)
 	SetName(name string) error
 	UserIdExist(userId int) (bool, error)
+	GetUserById(userID int) (User, error)
 	CreateNewUser(name string) (int, error)
 	UpdateUserPhoto(photo string, userId int) error
 	UpdateUsername(newName string, userId int) error
@@ -70,7 +71,6 @@ type appdbimpl struct {
 	c *sql.DB
 }
 
-// User rappresenta un utente nel database
 type User struct {
 	UserID int    `json:"userId"`
 	Name   string `json:"name"`
