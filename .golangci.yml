@@ -22,6 +22,9 @@ linters:
     - unused       # checks for unused types, functions, variables and constants
     - rowserrcheck # sql rows.Err() checks
     - staticcheck  # simplify code and replacement for `go vet` and `go lint`
+    - wastedassign
+    - ineffassign
+    - sqlclosecheck
   exclusions:
     generated: lax # skips autogen'd files
     presets:
