@@ -582,7 +582,7 @@ paths:
     get:
       tags:
         - Message
-      summary: Retrieve the status of all messages in a chat
+      summary: Retrieve all messages in a chat
       description: |
         Retrieves a list of all messages in the specified chat with their respective 
         statuses (`sent`, `received`, or `read`).
