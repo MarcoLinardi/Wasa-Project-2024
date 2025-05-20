@@ -22,6 +22,12 @@ export default {
     this.loadMessages(this.chatId)
   },
   methods: {
+     getParticipantNames(chat) {
+      if (chat && chat.isGroup && Array.isArray(chat.participants)) {
+        return chat.participants.map(user => user.name).join(', ');
+      }
+      return '';
+    },
     async loadMessages(chatId) {
       try {
         const response = await axiosInstance.get(`/chats/${chatId}/messages/status`);
@@ -42,6 +48,9 @@ export default {
       <img :src="selectedUser.photo" class="user-photo" />
       <h2 v-if="selectedChat">{{ selectedChat.name }}</h2>
       <h2 v-if="selectedUser">{{ selectedUser.name }}</h2>
+      <h4 v-if="selectedChat && selectedChat.isGroup">
+        {{ getParticipantNames(selectedChat) }}
+      </h4>
     </div>
 
     <!-- BODY -->
