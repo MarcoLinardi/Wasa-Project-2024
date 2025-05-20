@@ -16,6 +16,9 @@ export default {
       showChatArea: false,
       isUserLogged: false,
       selectedChat: null,
+      isCreatingGroup: false,
+      selectedUsers: [],
+      groupName: "",
     }
   },
   components: {
@@ -29,12 +32,6 @@ export default {
   },
 
   methods: {
-    logout() {
-      localStorage.removeItem('token');
-      localStorage.removeItem('user')
-      this.$router.push('/login');
-      console.log('Logout effettuato');
-    },
     loadLoggedUser() {
       const userData = localStorage.getItem('user');
       if (userData) {
@@ -48,19 +45,12 @@ export default {
       try {
         const response = await axiosInstance.get("/users");
         this.users = response.data.users;
-        this.users.sort((a, b) => {
-          if (a.name < b.name) {
-            return -1; // a viene prima di b
-          }
-          if (a.name > b.name) {
-            return 1; // b viene prima di a
-          }
-          return 0; // a e b sono uguali
-        })
+        this.users.sort((a, b) => (a.name || "").localeCompare(b.name || ""));
       } catch (e) {
         console.error(e);
       }
     },
+
     openUserProfile() {
       this.selectedUser = this.loggedUser;
       this.showUserProfile = true;
@@ -84,10 +74,6 @@ export default {
       this.showChatArea = false;
       this.isUserLogged = false;
     },
-    updateUserName(newName) {
-    console.log("Nuovo nome ricevuto:", newName);
-    this.loggedUser.name = newName;
-  },
   }
 }
 </script>
@@ -126,26 +112,32 @@ export default {
       <!-- Lista Utenti -->
       <div v-if="selectedSection === 'user'" class="user-list">
         <!-- Bottone Crea Gruppo -->
-        <button class="btn-create-group">
-          <svg class="feather"><use href="/feather-sprite-v4.29.0.svg#users"/></svg> Crea Gruppo
+        <button class="btn-create-group" @click="toggleGroupCreation">
+          <svg class="feather"><use href="/feather-sprite-v4.29.0.svg#users"/></svg>
+          {{ isCreatingGroup ? 'Annulla' : 'Crea Gruppo' }}
         </button>
+        <input
+          v-if="isCreatingGroup"
+          v-model="groupName"
+          placeholder="Nome del gruppo"
+          class="group-name-input"
+        />
+
 
         <!-- Lista degli utenti come componenti UserItem -->
-        <UserItem 
-          v-for="user in users" 
-          :key="user.id" 
-          :user="user" 
+        <UserItem
+          v-for="user in users"
+          :key="user.id"
+          :user="user"
+          :selected="selectedUsers.some(user => user.userId === user.id)"
           @select-user="handleUserClick"
         />
+
       </div>
 
-      <!-- Bottoni di Controllo -->
-      <div class="control-options">
-        <button class="control-btn" title="Profilo"  @click="openUserProfile">
-          <svg class="feather"><use href="/feather-sprite-v4.29.0.svg#user"/> </svg></button>
-        <button class="control-btn" title="Logout" @click="logout">
-          <svg class="feather"><use href="/feather-sprite-v4.29.0.svg#log-out"/> </svg></button>
-      </div>
+      <button v-if="isCreatingGroup" @click="confirmGroupCreation" class="btn-confirm-group">
+        ✅ Conferma gruppo ({{ selectedUsers.length }})
+      </button>
     </div>
 
     <!-- Chat Area -->
@@ -267,4 +259,13 @@ export default {
   display: flex;
   flex-direction: column;
 }
+
+.group-name-input {
+  margin: 10px 0;
+  padding: 6px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  width: 100%;
+}
+
 </style>
