@@ -34,6 +34,13 @@ func (db *appdbimpl) GetChats(userId int) ([]Chat, error) {
 		}
 		chat.Members = participants
 
+		// Carica l'ultimo messaggio
+		lastMsg, err := db.getLastMessage(chat.ChatID)
+		if err != nil {
+			return nil, fmt.Errorf("error getting last message: %w", err)
+		}
+		chat.LastMessage = lastMsg
+
 		chats = append(chats, chat)
 	}
 

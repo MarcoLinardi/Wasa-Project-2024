@@ -78,11 +78,18 @@ type User struct {
 }
 
 type Chat struct {
-	ChatID  int    `json:"chatId"`
-	Name    string `json:"name"`
-	Photo   string `json:"photo"`
-	IsGroup bool   `json:"isGroup"`
-	Members []User `json:"participants"`
+	ChatID      int          `json:"chatId"`
+	Name        string       `json:"name"`
+	Photo       string       `json:"photo"`
+	IsGroup     bool         `json:"isGroup"`
+	Members     []User       `json:"participants"`
+	LastMessage *LastMessage `json:"lastMessage,omitempty"`
+}
+
+type LastMessage struct {
+	Content   string `json:"content"`
+	Timestamp string `json:"timestamp"`
+	SenderID  int    `json:"senderID,omitempty"`
 }
 
 type Message struct {
@@ -166,7 +173,6 @@ func New(db *sql.DB) (AppDatabase, error) {
 										FOREIGN KEY (chatId) REFERENCES chats_table(chatId) ON DELETE CASCADE,
 										FOREIGN KEY (senderId) REFERENCES users_table(userId) ON DELETE CASCADE
 										);`
-
 		_, err = db.Exec(sqlStmt)
 		if err != nil {
 			return nil, fmt.Errorf("error creating messages table: %w", err)
