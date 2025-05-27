@@ -101,6 +101,7 @@ export default {
         }
         const updatedUser = { ...this.loggedUser, photo: this.loggedUser.photo };
         localStorage.setItem('user', JSON.stringify(updatedUser));
+        this.isEditingPhoto = !this.isEditingPhoto;
       } catch (error) {
         console.error("Errore durante l'upload della foto:", error);
         alert("Errore durante l'upload della foto");

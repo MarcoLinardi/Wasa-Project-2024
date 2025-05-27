@@ -1,5 +1,5 @@
 <script>
-  export default{
+  export default {
     props: {
         user: {
           type: Object,
@@ -7,12 +7,8 @@
         },
         isSelected: {
           type: Boolean,
-          required: true,
           default: false
         }
-    },
-    mounted() {
-
     },
     methods: {
       handleClick() {
@@ -63,7 +59,7 @@
   }
 
   .user-item:hover {
-    background-color: #007bff;
+    background-color: rgba(0, 0, 128, 0.404);
   }
 
   .user-avatar {

@@ -60,7 +60,7 @@ export default {
         alert('Gruppo creato con successo!');
         this.groupName = '';
         this.selectedUserIds = [];
-        // this.$router.push({ name: 'ChatView', params: { chatId: newChat.chatId } });
+        // this.$router.push({ name: 'HomeView', params: { chatId: newChat.chatId } });
       } catch (e) {
         console.error('Errore durante la creazione del gruppo:', e.response || e.message || e);
         alert('Errore durante la creazione del gruppo.');
@@ -136,7 +136,7 @@ export default {
   width: 100%;
   max-width: 700px;
   margin: 2rem auto;
-  background-color: #f9f9f9;
+  background-color: whitesmoke;
   border-radius: 10px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   font-family: 'Arial', sans-serif;
@@ -170,7 +170,7 @@ export default {
 .form-group input[type="text"] {
   width: 100%;
   padding: 8px;
-  border: 1px solid #ccc;
+  border: 1px solid navy;
   border-radius: 6px;
   font-size: 1rem;
   transition: border-color 0.3s ease;
@@ -211,7 +211,7 @@ export default {
   list-style-type: none;
   padding: 0;
   margin: 0;
-  border: 1px solid #ddd;
+  border: 1px solid navy;
   border-radius: 6px;
   background-color: #fff;
 }

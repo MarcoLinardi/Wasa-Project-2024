@@ -1,36 +1,35 @@
 <script>
 import axiosInstance from "@/services/axios";
-import UserItem from "../components/UserItem.vue";
-import UserProfile from "../components/UserProfile.vue";
+import ChatItem from "../components/ChatItem.vue";
 import ChatArea from "../components/ChatArea.vue";
 
 export default {
   data() {
     return {
-      users: [],
       chats: [],
-      selectedSection: "chat",
-      loggedUser: null,
-      selectedUser: null,
-      showUserProfile: false,
-      showChatArea: false,
-      isUserLogged: false,
+      chatName: "",
       selectedChat: null,
-      isCreatingGroup: false,
-      selectedUsers: [],
-      groupName: "",
     }
   },
   components: {
-    UserItem,
-    UserProfile,
+    ChatItem,
     ChatArea
   },
-  mounted() {
-    this.loadUsers();
+  created() {
+    this.loadChats();
     this.loadLoggedUser();
   },
-
+  computed: {
+    filteredChats() {
+      if (!this.chatName) {
+        return this.chats;
+      }
+      const searchTerm = this.chatName.toLowerCase();
+      return this.chats.filter(chat => {
+        return chat.name && chat.name.toLowerCase().includes(searchTerm);
+      });
+    }
+  },
   methods: {
     loadLoggedUser() {
       const userData = localStorage.getItem('user');
@@ -41,39 +40,21 @@ export default {
         console.warn("Nessun utente trovato in localStorage");
       }
     },
-    async loadUsers() {
+    async loadChats() {
       try {
-        const response = await axiosInstance.get("/users");
-        this.users = response.data.users;
-        this.users.sort((a, b) => (a.name || "").localeCompare(b.name || ""));
+        const response = await axiosInstance.get("/chats");
+        this.chats = response.data.chats;
+        this.chats.sort((a, b) => (a.name || "").localeCompare(b.name || ""));
+        console.log('chat caricate:', JSON.stringify(this.chats, null, 2));
+
       } catch (e) {
         console.error(e);
       }
     },
-
-    openUserProfile() {
-      this.selectedUser = this.loggedUser;
-      this.showUserProfile = true;
-      this.isUserLogged = true;
-      this.showChatArea = false;
-    },
-    closeUserProfile() {
-      this.showUserProfile = false;
-      this.selectedUser = null;
-      this.isUserLogged = false
-    },
-    openChat(user) {
-      this.selectedUser = user;
-      this.selectedChat = null;
-      this.showUserProfile = false;
-      this.showChatArea = true;
-    },
-    handleUserClick(user) {
-      this.selectedUser = user;
-      this.showUserProfile = true;
-      this.showChatArea = false;
-      this.isUserLogged = false;
-    },
+    handleChatSelected(chat) {
+      this.selectedChat = chat;
+      console.log("Chat selezionata in HomeView:", this.selectedChat);
+    }
   }
 }
 </script>
@@ -82,78 +63,35 @@ export default {
 <template>
   <div class="home-container">
     <div class="sidebar-wrapper">
-      <div class="buttons">
-        <button 
-          class="btn" 
-          :class="{ 'active': selectedSection === 'chat' }"
-          @click="selectedSection = 'chat'">
-          Chat
-        </button>
-        <button 
-          class="btn" 
-          :class="{ 'active': selectedSection === 'user' }"
-          @click="selectedSection = 'user'">
-          Utenti
-        </button>
-      </div>
-
       <!-- Lista Chat -->
-      <div v-if="selectedSection === 'chat'" class="chat-list">
-        <div class="chat-item">
-          <div class="font-semibold">Chat 1</div>
-          <div class="text">Ultimo messaggio...</div>
+      <div class="chat-list">
+        <h2>Le mie chat</h2>
+        <div class="search-chat">
+          <input type="text" id="chatName" v-model="chatName" placeholder="Cerca chat">
         </div>
-        <div class="chat-item">
-          <div class="font-semibold">Chat 2</div>
-          <div class="text">Ultimo messaggio...</div>
+        <div class="chats-list-container">
+          <p v-if="!filteredChats || filteredChats.length === 0" class="no-users-message">
+            Nessuna chat disponibile o nessun risultato per la ricerca...
+          </p>
+          <div class="chat-list" v-else>
+            <li v-for="chat in filteredChats" :key="chat.chatId" class="chat-item">
+              <ChatItem 
+                :chat="chat"
+                @select-chat="handleChatSelected"
+              />
+            </li>
+          </div>
         </div>
       </div>
-
-      <!-- Lista Utenti -->
-      <div v-if="selectedSection === 'user'" class="user-list">
-        <!-- Bottone Crea Gruppo -->
-        <button class="btn-create-group" @click="toggleGroupCreation">
-          <svg class="feather"><use href="/feather-sprite-v4.29.0.svg#users"/></svg>
-          {{ isCreatingGroup ? 'Annulla' : 'Crea Gruppo' }}
-        </button>
-        <input
-          v-if="isCreatingGroup"
-          v-model="groupName"
-          placeholder="Nome del gruppo"
-          class="group-name-input"
-        />
-
-
-        <!-- Lista degli utenti come componenti UserItem -->
-        <UserItem
-          v-for="user in users"
-          :key="user.id"
-          :user="user"
-          :selected="selectedUsers.some(user => user.userId === user.id)"
-          @select-user="handleUserClick"
-        />
-
-      </div>
-
-      <button v-if="isCreatingGroup" @click="confirmGroupCreation" class="btn-confirm-group">
-        ✅ Conferma gruppo ({{ selectedUsers.length }})
-      </button>
     </div>
-
     <!-- Chat Area -->
-    <div class="chat-wrapper">
-      <UserProfile 
-        v-if="showUserProfile" 
-        :user="selectedUser"
-        :isUserLogged="isUserLogged"
-        @close="closeUserProfile"
-        @start-new-chat="openChat"
-      />
+    <div v-if="selectedChat" class="chat-wrapper">
       <ChatArea
-        v-if="showChatArea"
-        :selectedUser="selectedUser"
         :selectedChat="selectedChat"
+        @select-chat="handleChatSelected"
       />
+    </div>
+    <div v-else class="chat-placeholder"> <p>Seleziona una chat per visualizzare i messaggi.</p>
     </div>
   </div>
 </template>
@@ -161,8 +99,17 @@ export default {
 <style>
 /* Layout principale */
 .home-container {
+  width: 100%;
+  max-width: 1000px;
+  height: 90vh;
+  margin: 40px auto;
+  background-color: whitesmoke;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
   display: flex;
-  height: 100vh;
+  flex-direction: row;
+  border: 4px solid navy;
+  overflow: hidden;
 } 
 
 /* Sidebar */
@@ -174,98 +121,58 @@ export default {
   padding: 20px;
   display: flex;
   flex-direction: column;
-  border-right: 1px solid #444;
+  border-right: 2px solid navy;
 }
 
-.buttons {
+.search-chat {
   display: flex;
-  justify-content: space-around;
-  margin-bottom: 20px;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+  margin-bottom: 5px;
 }
 
-.btn {
-  background-color: rgb(217, 128, 91);
-  color: white;
-  padding: 10px 20px;
-  border-radius: 15px;
-  cursor: pointer;
-  border: none;
-  transition: background-color 0.3s ease;
-}
-.btn:hover {
-  background-color: rgb(202, 115, 79);
-}
-.btn.active {
-  background-color: rgb(180, 90, 58);
+.search-chat input[type="text"] {
+  width: 90%;
+  padding: 6px 18px;
+  border: 2px solid rgb(185, 181, 219);
+  border-radius: 25px;
+  font-size: 1.1em;
+  outline: none;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+  background-color: #f8f8f8;
 }
 
-.chat-list, .user-list {
+.search-chat input[type="text"]:focus {
+  border-color: navy;
+}
+
+.search-chat input[type="text"]::placeholder {
+  color: #95a5a6;
+}
+
+.chat-list h2 {
+  text-align: center;
+}
+
+.chat-list{
   overflow-y: auto;
-  max-height: calc(100vh - 200px); /* Spazio per bottoni e controlli */
+  max-height: calc(100vh - 200px);
   flex-grow: 1;
 }
 
 .chat-item {
-  padding: 12px;
+  padding: 1px;
   border-radius: 5px;
   cursor: pointer;
-}
-.chat-item:hover {
-  background-color: rgb(217, 128, 91);
-}
-
-.control-options {
-  margin-top: auto;
-  display: flex;
-  justify-content: center;
-  width: 100%;
-  justify-content: space-around;
-}
-.control-btn {
-  display: flex;
-  justify-content: center;
-  padding: 12px;
-  background-color: rgb(217, 128, 91);
-  color: white;
-  border-radius: 15px;
-  cursor: pointer;
-  margin-top: 10px;
-  border: none;
-  width: 3.5rem;
-}
-.control-btn:hover {
-  background-color: rgb(202, 115, 79);
-}
-
-/* Bottone crea gruppo */
-.btn-create-group {
-  background-color: transparent;
-  width: 100%;
-  color: white;
-  padding: 10px 20px;
-  border-radius: 5px;
-  cursor: pointer;
-  border: none;
-  transition: background-color 0.3s ease;
-}
-.btn-create-group:hover {
-  background-color: rgb(202, 115, 79);
 }
 
 /* Chat Area */
 .chat-wrapper {
   flex-grow: 1;
-  background-color: rgb(210, 180, 140);
+  background-color: navy;
   display: flex;
   flex-direction: column;
 }
-
-.group-name-input {
-  margin: 10px 0;
-  padding: 6px;
-  border-radius: 6px;
-  border: 1px solid #ccc;
-  width: 100%;
-}
-
 </style>

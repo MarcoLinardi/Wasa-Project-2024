@@ -3,10 +3,6 @@ import axiosInstance from "@/services/axios";
 
 export default {
   props: {
-    selectedUser: {
-      type: Object,
-      required: true
-    },
     selectedChat: {
       type: Object,
       required: true
@@ -19,12 +15,12 @@ export default {
     };
   },
   mounted() {
-    this.loadMessages(this.chatId)
+    this.loadMessages(this.selectedChat.chatId)
   },
   methods: {
-     getParticipantNames(chat) {
+    getParticipantNames(chat) {
       if (chat && chat.isGroup && Array.isArray(chat.participants)) {
-        return chat.participants.map(user => user.name).join(', ');
+        return chat.participants.map(p => p.name).join(', ');
       }
       return '';
     },
@@ -44,13 +40,14 @@ export default {
   <div class="chat-area">
     
     <!-- HEADER -->
-    <div class="chat-header">
-      <img :src="selectedUser.photo" class="user-photo" />
-      <h2 v-if="selectedChat">{{ selectedChat.name }}</h2>
-      <h2 v-if="selectedUser">{{ selectedUser.name }}</h2>
-      <h4 v-if="selectedChat && selectedChat.isGroup">
-        {{ getParticipantNames(selectedChat) }}
-      </h4>
+    <div class="chat-header" v-if="selectedChat">
+      <img :src="selectedChat.photo" class="chat-photo" />
+      <div class="chat-info">
+        <h2>{{ selectedChat.name }}</h2>
+        <h4 v-if="selectedChat.isGroup" class="participants">
+          {{ getParticipantNames(selectedChat) }}
+        </h4>
+      </div>
     </div>
 
     <!-- BODY -->
@@ -58,8 +55,8 @@ export default {
       
     </div>
 
-    <!-- FOOTER sempre visibile -->
-    <div class="chat-footer" v-if="selectedChat || selectedUser">
+    <!-- FOOTER -->
+    <div class="chat-footer" v-if="selectedChat">
       <div class="input-container">
         <input
           v-model="messageText"
@@ -84,14 +81,14 @@ export default {
   flex-direction: column;
   flex-grow: 1;
   height: 100%;
-  background-color: rgb(210, 180, 140);
+  background-color: rgb(220, 212, 248);
   overflow: hidden;
 }
 
 .chat-header {
   height: 80px;
-  background-color: rgb(210, 180, 140);
-  border-bottom: 1px solid #444;
+  background-color: rgb(220, 212, 248);
+  border-bottom: 2px solid navy;
   display: flex;
   align-items: center;
   padding: 0 1rem;
@@ -99,7 +96,22 @@ export default {
   flex-shrink: 0;
 }
 
-.chat-header h2 {
+.chat-photo {
+  width: 4rem;
+  height: 4rem;
+  object-fit: cover;
+  border-radius: 50%;
+  margin-right: 1rem;
+}
+
+.chat-info {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.chat-info h2 {
   font-size: 1.3rem;
   margin: 0;
   color: #333;
@@ -108,18 +120,20 @@ export default {
   text-overflow: ellipsis;
 }
 
-.user-photo {
-  width: 4rem;
-  height: 4rem;
-  object-fit: cover;
-  border-radius: 50%;
-  margin-right: 1rem;
+.chat-info .participants {
+  font-size: 0.9rem;
+  margin: 2px 0 0 0;
+  color: #222;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-weight: normal;
 }
 
 .chat-body {
   flex-grow: 1; 
   overflow-y: auto;
-  background-color: rgb(221, 221, 150);
+  background-color: whitesmoke;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -127,10 +141,10 @@ export default {
 }
 
 .chat-footer {
-  background-color: rgb(210, 180, 140);
+  background-color: rgb(220, 212, 248);
   padding: 0.5rem;
   width: 100%;
-  border-top: 1px solid #444;
+  border-top: 2px solid navy;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -168,7 +182,8 @@ export default {
 }
 
 .send-button:hover {
-  background-color: rgb(200, 170, 130);
+  background-color: navy;
+  color: rgb(220, 212, 248);
 }
 
 .send-button svg {
