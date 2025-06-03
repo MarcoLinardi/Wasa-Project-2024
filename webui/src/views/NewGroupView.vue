@@ -45,7 +45,7 @@ export default {
         return;
       }
       const newGroupRequest = {
-        name: this.groupName || 'Nuovo Gruppo',
+        name: this.groupName,
         users: this.selectedUserIds,
         isGroup: true
       };
@@ -57,10 +57,9 @@ export default {
           isGroup: true
         };
         console.log('Gruppo creato con successo', newChat);
-        alert('Gruppo creato con successo!');
         this.groupName = '';
         this.selectedUserIds = [];
-        // this.$router.push({ name: 'HomeView', params: { chatId: newChat.chatId } });
+        this.$router.push("/home");
       } catch (e) {
         console.error('Errore durante la creazione del gruppo:', e.response || e.message || e);
         alert('Errore durante la creazione del gruppo.');
@@ -215,31 +214,6 @@ export default {
   border-radius: 6px;
   background-color: #fff;
 }
-
-.user-item-wrapper {
-  border-bottom: 1px solid #eee;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: background-color 0.2s ease-in-out;
-}
-
-.user-item-wrapper:last-child {
-  border-bottom: none;
-}
-
-.user-item-wrapper:hover,
-.user-item-wrapper:focus-within {
-  background-color: #f0f0f0;
-}
-
-.user-item-wrapper.selected {
-  background-color: navy;
-  color: white;
-}
-.user-item-wrapper.selected .user-name {
-    color: white;
-}
-
 
 /* Footer fisso in basso */
 .create-group-footer {

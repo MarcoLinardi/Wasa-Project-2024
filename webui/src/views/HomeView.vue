@@ -15,9 +15,22 @@ export default {
     ChatItem,
     ChatArea
   },
-  created() {
+  mounted() {
     this.loadChats();
     this.loadLoggedUser();
+    this.$watch(
+      () => this.chats,
+      (newChats) => {
+        const selectedChatId = this.$route.query.selectedChatId;
+        if (selectedChatId && newChats.length > 0) {
+          const foundChat = newChats.find(chat => chat.chatId === selectedChatId);
+          if (foundChat) {
+            this.handleChatSelected(foundChat);
+          }
+        }
+      },
+      { immediate: true }
+    );
   },
   computed: {
     filteredChats() {
@@ -28,6 +41,24 @@ export default {
       return this.chats.filter(chat => {
         return chat.name && chat.name.toLowerCase().includes(searchTerm);
       });
+    }
+  },
+  watch: {
+    chats: {
+      immediate: true,
+      handler(newChats) {
+        const selectedChatId = this.$route.query.selectedChatId;
+
+        if (selectedChatId && newChats.length > 0) {
+          const foundChat = newChats.find(
+            chat => chat.chatId.toString() === selectedChatId
+          );
+
+          if (foundChat) {
+            this.handleChatSelected(foundChat);
+          }
+        }
+      }
     }
   },
   methods: {
@@ -43,9 +74,12 @@ export default {
     async loadChats() {
       try {
         const response = await axiosInstance.get("/chats");
-        this.chats = response.data.chats;
-        this.chats.sort((a, b) => (a.name || "").localeCompare(b.name || ""));
-        console.log('chat caricate:', JSON.stringify(this.chats, null, 2));
+        this.chats = response.data.chats || [];
+        this.chats.sort((a, b) => {
+          const tA = a.lastMessage?.timestamp || 0;
+          const tB = b.lastMessage?.timestamp || 0;
+          return new Date(tB) - new Date(tA); // Ordine decrescente (più recenti prima)
+        });
 
       } catch (e) {
         console.error(e);
@@ -53,7 +87,18 @@ export default {
     },
     handleChatSelected(chat) {
       this.selectedChat = chat;
-      console.log("Chat selezionata in HomeView:", this.selectedChat);
+    },
+    handleMessageSent() {
+      this.loadChats();
+    },
+    handleChatDeleted(chatId) {
+      // 1. Rimuovi la chat dall'array reattivo
+      this.chats = this.chats.filter(chat => chat.chatId !== chatId);
+
+      // 2. Se era la chat selezionata, deseleziona
+      if (this.selectedChat && this.selectedChat.chatId === chatId) {
+        this.selectedChat = null;
+      }
     }
   }
 }
@@ -65,7 +110,7 @@ export default {
     <div class="sidebar-wrapper">
       <!-- Lista Chat -->
       <div class="chat-list">
-        <h2>Le mie chat</h2>
+        <h3>Le mie chat</h3>
         <div class="search-chat">
           <input type="text" id="chatName" v-model="chatName" placeholder="Cerca chat">
         </div>
@@ -77,6 +122,7 @@ export default {
             <li v-for="chat in filteredChats" :key="chat.chatId" class="chat-item">
               <ChatItem 
                 :chat="chat"
+                :loggedUser="loggedUser"
                 @select-chat="handleChatSelected"
               />
             </li>
@@ -88,7 +134,10 @@ export default {
     <div v-if="selectedChat" class="chat-wrapper">
       <ChatArea
         :selectedChat="selectedChat"
+        :loggedUser="loggedUser"
         @select-chat="handleChatSelected"
+        @message-sent="handleMessageSent"
+        @chat-deleted="handleChatDeleted"
       />
     </div>
     <div v-else class="chat-placeholder"> <p>Seleziona una chat per visualizzare i messaggi.</p>
@@ -99,8 +148,8 @@ export default {
 <style>
 /* Layout principale */
 .home-container {
-  width: 100%;
-  max-width: 1000px;
+  width: 90%;
+  max-width: 80rem;
   height: 90vh;
   margin: 40px auto;
   background-color: whitesmoke;
@@ -114,30 +163,29 @@ export default {
 
 /* Sidebar */
 .sidebar-wrapper {
-  width: 25%;
-  height: 100%;
-  background-color: rgb(210, 180, 140);
+  width: 30%;
+  height: 100vh;
+  background-color: #c7c6e4;
   color: white;
-  padding: 20px;
+  padding: 1rem;
   display: flex;
   flex-direction: column;
-  border-right: 2px solid navy;
+  border-right: 0.15rem solid navy;
 }
 
 .search-chat {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px;
-  margin-top: 10px;
-  margin-bottom: 5px;
+  margin-top: 1rem;
+  margin-bottom: 1.5rem;
 }
 
 .search-chat input[type="text"] {
-  width: 90%;
-  padding: 6px 18px;
+  width: 80%;
+  padding: 0.45rem 1rem;
   border: 2px solid rgb(185, 181, 219);
-  border-radius: 25px;
+  border-radius: 2rem;
   font-size: 1.1em;
   outline: none;
   transition: border-color 0.3s ease, box-shadow 0.3s ease;
@@ -152,8 +200,9 @@ export default {
   color: #95a5a6;
 }
 
-.chat-list h2 {
+.chat-list h3 {
   text-align: center;
+  color: #444;
 }
 
 .chat-list{
@@ -163,8 +212,8 @@ export default {
 }
 
 .chat-item {
-  padding: 1px;
-  border-radius: 5px;
+  padding: 0.2rem;
+  border-radius: 1rem;
   cursor: pointer;
 }
 

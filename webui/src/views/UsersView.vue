@@ -12,7 +12,8 @@ export default {
     return {
       userName: "",
       users: [],
-      selectedUser: null
+      selectedUser: null,
+      chats: []
     }
   },
   computed: {
@@ -27,6 +28,16 @@ export default {
     }
   },
   methods: {
+    async loadChats() {
+      try {
+        const response = await axiosInstance.get("/chats");
+        this.chats = response.data.chats || [];
+        this.chats.sort((a, b) => (a.name || "").localeCompare(b.name || ""));
+
+      } catch (e) {
+        console.error(e);
+      }
+    },
     async loadUsers() {
       try {
         const response = await axiosInstance.get("/users");
@@ -38,42 +49,95 @@ export default {
         this.users = [];
       }
     },
+    loadLoggedUser() {
+      const userData = localStorage.getItem('user');
+      if (userData) {
+        this.loggedUser = JSON.parse(userData);
+        console.log("Utente loggato caricato:", this.loggedUser);
+      } else {
+        console.warn("Nessun utente trovato in localStorage");
+      }
+    },
+    findChatByName(userName) {
+      if (!userName || !this.chats) {
+        console.log("Nessuna chat trovata con: " + userName)
+        return null;
+      }
+      return this.chats.find(chat => chat.name === userName);
+    },
     handleUserSelected(user) {
-      this.selectedUser = user;
-      console.log("Utente selezionato in UsersView:", this.selectedUser);
+      console.log("user selezionato: " + user.name)
+      if (!user || !user.name) {
+        alert("Utente non valido selezionato.");
+        return;
+      }
+
+      const existingChat = this.findChatByName(user.name);
+
+      if (existingChat && existingChat.chatId) {
+        console.log(`Chat con ${user.name} esiste già (ID: ${existingChat.chatId}). Navigazione a HomeView.`);
+
+        this.$router.push({
+          path: '/home',
+          query: {
+            selectedChatId: existingChat.chatId
+          }
+        });
+      } else {
+        console.log(`Nessuna chat trovata con ${user.name}. Mostro NewChat.`);
+        this.selectedUser = user;
+      }
     },
     clearSelectedUser() {
       this.selectedUser = null;
     },
     async handleCreateNewChat(messageContent) {
-      if (!this.selectedUser || !messageContent.trim()) {
-        alert("Seleziona un utente e scrivi un messaggio.");
-        return;
-      }
-      console.log(`Tentativo di creare una nuova chat con: ${this.selectedUser.name}`);
-      console.log(`Messaggio: ${messageContent}`);
-      
-      // Qui implementerai la logica per creare la chat, ad esempio con una chiamata API:
+      const newChatRequest = {
+        name: this.selectedUser.name,
+        users: [this.selectedUser.userId],
+        isGroup: false
+      };
+
       try {
-        // Esempio di chiamata API (da adattare al tuo backend)
-        // const response = await axiosInstance.post('/chats/create', {
-        //   recipientUserId: this.selectedUser.userId,
-        //   message: messageContent
-        // });
-        // console.log('Nuova chat creata:', response.data);
-        
-        alert(`Chat con ${this.selectedUser.name} iniziata (simulazione).\nMessaggio: "${messageContent}"\nImplementare la logica di backend qui!`);
-        
-        // Dopo aver creato la chat, potresti voler resettare lo stato
-        this.selectedUser = null; 
+        // 1. Crea la chat
+        const response = await axiosInstance.post('/chats', newChatRequest);
+        const newChatId = response.data.chatId;
+
+        if (newChatId) {
+          console.log('Chat creata con successo. ID:', newChatId);
+
+          // 2. Se la chat è stata creata E c'è un messaggio da inviare
+          if (messageContent && messageContent.trim() !== '') {
+            const messagePayload = {
+              
+              content: messageContent,
+            };
+            try {
+              await axiosInstance.post(`/chats/${newChatId}/messages`, messagePayload); 
+              console.log('Messaggio inviato con successo alla chat ID:', newChatId);
+            } catch (msgError) {
+              console.error('Errore durante invio del messaggio:', msgError);
+              alert('Chat creata, ma si è verificato un errore nell\'invio del tuo primo messaggio.');
+            }
+          }
+          
+          // 3. Reindirizza alla home
+          this.$router.push("/home");
+          
+        } else {
+          console.error('Errore: chatId non ricevuto dopo la creazione della chat.');
+          alert('Errore durante la creazione della chat: ID della chat non valido.');
+        }
       } catch (error) {
-        console.error("Errore durante la creazione della chat:", error);
-        alert("Errore durante la creazione della chat.");
+        console.error('Errore durante la creazione della chat: ', error);
+        alert('Errore durante la creazione della chat.');
       }
     }
   },
-  created() {
+  mounted() {
     this.loadUsers();
+    this.loadChats();
+    this.loadLoggedUser()
   }
 }
 </script>

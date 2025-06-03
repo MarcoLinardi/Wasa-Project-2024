@@ -74,13 +74,6 @@ export default {
         return;
       }
 
-      // Limite di 1MB 
-      const maxSize = 1 * 1024 * 1024;
-      if (file.size > maxSize) {
-        alert("L'immagine non può superare 1MB.");
-        return;
-      }
-
       const reader = new FileReader();
       reader.onload = () => {
         const base64String = reader.result.split(',')[1]; // Rimuove "data:image/png;base64,"
