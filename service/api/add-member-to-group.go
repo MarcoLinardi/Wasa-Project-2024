@@ -18,7 +18,6 @@ func (rt *_router) addMemberToGroup(w http.ResponseWriter, r *http.Request, ps h
 		http.Error(w, `{"error": "Invalid chat ID"}`, http.StatusBadRequest)
 		return
 	}
-
 	var requestBody struct {
 		UserID int `json:"userId"`
 	}

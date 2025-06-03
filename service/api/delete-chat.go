@@ -13,6 +13,7 @@ func (rt *_router) deleteChat(w http.ResponseWriter, r *http.Request, ps httprou
 
 	// Recupera l'id della chat dai parametri dell'URL
 	chatIDStr := ps.ByName("chatId")
+
 	chatID, err := strconv.Atoi(chatIDStr)
 	if err != nil {
 		http.Error(w, "invalid chat id", http.StatusBadRequest)

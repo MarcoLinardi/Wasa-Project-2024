@@ -17,21 +17,7 @@ func (db *appdbimpl) CreateChat(name string, users []int, isGroup bool, authenti
 		if len(users) != 2 {
 			return 0, fmt.Errorf("chat privata con numero utenti non valido")
 		}
-
-		// Trovo l'altro utente (non il creator)
-		var otherUserID int
-		for _, id := range users {
-			if id != authenticatedUserID {
-				otherUserID = id
-				break
-			}
-		}
-
-		// Recupero avatar dell'altro utente
-		err := db.c.QueryRow("SELECT photo FROM users WHERE id = ?", otherUserID).Scan(&photo)
-		if err != nil || photo == "" {
-			photo = "/static/default-user.png" // fallback se errore o avatar vuoto
-		}
+		photo = ""
 	}
 
 	// Inserisco la chat nella tabella `chats_table`
