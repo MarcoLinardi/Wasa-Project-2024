@@ -8,11 +8,14 @@
         isSelected: {
           type: Boolean,
           default: false
+        },
+        isMember: {
+          type: Boolean,
+          default: false,
         }
     },
     methods: {
       handleClick() {
-        console.log("UserItem cliccato:", this.user.name);
         this.$emit('select-user', this.user);
       },
       getUserPhoto(photo) {
@@ -30,51 +33,83 @@
 
 <template>
   <div
-    class="user-item p-4 border-b cursor-pointer flex items-center gap-4 rounded-md"
-    :class="{ 'bg-orange-300 text-white font-semibold': isSelected }"
+    class="user-item"
+    :class="{ 'is-member': isMember, 'selected': isSelected }"
     @click="handleClick"
   >
     <img
       :src="getUserPhoto(user.photo)"
-      class="user-avatar w-10 h-10 rounded-full object-cover"
       alt="User avatar"
+      class="user-avatar"
     />
-    <div class="flex justify-between items-center w-full">
-      <span>{{ user.name }}</span>
-      <span v-if="isSelected" class="ml-2">✔️</span>
+
+    <div class="user-details">
+      <span class="user-name">{{ user.name }}</span>
+      <span v-if="isMember" class="member-badge">Membro</span>
+      <span v-if="isSelected" class="checkmark">✔</span>
     </div>
   </div>
 </template>
   
 <style scoped>
-  .user-item {
-    display: flex;
-    align-items: center;
-    padding: 8px 12px;
-    border-radius: 6px;
-    cursor: pointer;
-    gap: 12px;
-    height: 4rem;
-    transition: background-color 0.2s;
-  }
+.user-item {
+  background: white;
+  border-radius: 1rem;
+  padding: 0.6rem 0.8rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  margin-bottom: 0.2rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
 
-  .user-item:hover {
-    background-color: rgba(0, 0, 128, 0.404);
-  }
+.user-item:hover {
+  background-color: #eef0ff;
+}
 
-  .user-avatar {
-    width: 50px;
-    height: 50px;
-    border-radius: 50%;
-    object-fit: cover;
-    border: none;
-    box-shadow: none;
-  }
+.user-item.is-member {
+  background-color: #e3e6ff;
+  border-left: 4px solid navy;
+}
 
-  .user-name {
-    color: white;
-    font-size: 14px;
-    font-weight: 500;
-  }
+.user-item.selected {
+  background-color: #cfd5ff;
+}
+
+.user-avatar {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.user-details {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  width: 100%;
+  justify-content: space-between;
+}
+
+.user-name {
+  color: black;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.member-badge {
+  background-color: navy;
+  color: white;
+  padding: 0.2rem 0.6rem;
+  font-size: 0.75rem;
+  border-radius: 999px;
+}
+
+.checkmark {
+  color: green;
+  font-size: 1rem;
+  font-weight: bold;
+}
 </style>
-  

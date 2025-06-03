@@ -5,6 +5,10 @@ export default {
       type: Object,
       required: true,
     },
+    loggedUser: {
+      type: Object,
+      required: true
+    }
   },
   computed: {
     formattedTimestamp() {
@@ -37,15 +41,63 @@ export default {
       // Formato "dd/mm/yyyy" per date più vecchie
       return messageDate.toLocaleDateString('it-IT');
     },
-    profileImageUrl() {
-      return this.chat.photo
+    displayPhoto() {
+      if (this.chat.isGroup) {
+        if (this.chat.photo.startsWith('/')) {
+          return this.chat.photo
+        }
+        return 'data:image/jpeg;base64,' + this.chat.photo || 'images/default-group-avatar.png'; // Fallback per foto di gruppo
+      }
+      // È una chat privata, trova l'altro partecipante
+      if (this.chat.participants && this.chat.participants.length > 0) {
+        const otherParticipant = this.chat.participants.find(
+          participant => participant.userId !== this.loggedUser.userId
+        );
+
+        if (otherParticipant && otherParticipant.photo) {
+          const photo = otherParticipant.photo.trim();
+          const DEFAULT_USER_PHOTO = '/images/default-user-avatar.png';
+
+          // Caso 1: è una base64 valida
+          if (photo.startsWith('data:image')) {
+            return photo;
+          }
+          // Caso 2: è un percorso (non base64)
+          if (photo === DEFAULT_USER_PHOTO) {
+            return photo;
+          }
+          // Caso 3: è una stringa base64 *senza* prefisso
+          return `data:image/png;base64,${photo}`;
+        }
+
+        return '/images/default-user-avatar.png'; // Fallback definitivo
+      }
+    },
+
+    displayName() {
+      if (this.chat.isGroup) {
+        return this.chat.name || 'Gruppo'; // Nome del gruppo
+      }
+
+      // È una chat privata, trova l'altro partecipante
+      if (this.chat.participants && this.chat.participants.length > 0) {
+        const otherParticipant = this.chat.participants.find(
+          participant => participant.userId !== this.loggedUser.userId
+        );
+
+        if (otherParticipant && otherParticipant.name) {
+          return otherParticipant.name;
+        }
+      }
+      // Fallback se il nome della chat fornito dal backend è già quello dell'altro utente
+      return this.chat.name || 'Chat';
     }
   },
   methods: {
     selectChat() {
-      console.log('Chat selezionata:', this.chat.name);
+      console.log('Chat selezionata:'+ this.chat.name);
       this.$emit('select-chat', this.chat);
-    }
+    },
   }
 };
 </script>
@@ -53,11 +105,11 @@ export default {
 <template>
   <div class="chat-item" @click="selectChat">
     <div class="chat-avatar">
-      <img :src="profileImageUrl" :alt="chat.name" class="avatar-img" />
-      </div>
+      <img :src="displayPhoto" :alt="displayName" class="avatar-img" />
+    </div>
     <div class="chat-content">
       <div class="chat-header">
-        <span class="chat-name">{{ chat.name }}</span>
+        <span class="chat-name">{{ displayName }}</span>
         <span class="chat-timestamp">{{ formattedTimestamp }}</span>
       </div>
       <div class="chat-last-message" v-if="chat.lastMessage">
@@ -71,15 +123,17 @@ export default {
 .chat-item {
   display: flex;
   align-items: center;
-  padding: 5px 8px;
+  padding: 0.7rem 1rem;
   cursor: pointer;
   transition: background-color 0.2s ease;
-  color: whitesmoke;
+  color: #444;
   font-family: Arial, sans-serif;
+  background-color: rgba(0, 0, 128, 0.100);
 }
 
 .chat-item:hover {
-  background-color: navy;
+  background-color: rgba(0, 0, 128, 0.300);
+  color: white;
 }
 
 .chat-avatar {
@@ -89,8 +143,8 @@ export default {
 }
 
 .avatar-img {
-  width: 45px;
-  height: 45px;
+  width: 3.2rem;
+  height: 3.2rem;
   border-radius: 50%;
   object-fit: cover;
 }
@@ -106,11 +160,11 @@ export default {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 4px;
+  margin-bottom: 0.5rem;
 }
 
 .chat-name {
-  color: whitesmoke;
+  color: black;
   font-size: 1em;
   white-space: nowrap;
   overflow: hidden;
@@ -119,14 +173,13 @@ export default {
 
 .chat-timestamp {
   font-size: 0.85em;
-  color: #999; /* Timestamp grigio chiaro */
+  color: rgba(0, 0, 0, 0.700);
   white-space: nowrap;
-  margin-left: 10px; /* Spazio tra nome e timestamp */
 }
 
 .chat-last-message {
   font-size: 0.9em;
-  color: #b0b0b0;
+  color: rgba(0, 0, 0, 0.700);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;

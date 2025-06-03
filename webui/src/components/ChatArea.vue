@@ -1,22 +1,101 @@
 <script>
 import axiosInstance from "@/services/axios";
+import Message from "./Message.vue";
+import ChatInfo from "./ChatInfo.vue";
 
 export default {
   props: {
     selectedChat: {
       type: Object,
       required: true
+    },
+    loggedUser: {
+      type: Object,
+      required: true
     }
+  },
+  component: {
+    Message,
+    ChatInfo
   },
   data() {
     return {
       messageText: "",
-      messages: []
+      messages: [],
+      showInfo: false
     };
   },
-  mounted() {
-    this.loadMessages(this.selectedChat.chatId)
+  watch: {
+    selectedChat: {
+      handler(newChat, oldChat) {
+        if (newChat && newChat.chatId && (!oldChat || newChat.chatId !== oldChat.chatId)) {
+          this.loadMessages(newChat.chatId);
+        } else if (!newChat) {
+          this.messages = [];
+        }
+      },
+      immediate: true
+    }
   },
+  computed: {
+    otherParticipant() {
+      if (this.selectedChat && !this.selectedChat.isGroup) {
+        return this.selectedChat.participants.find(
+          participant => participant.userId !== this.loggedUser.userId
+        );
+      }
+      return null;
+    },
+    chatPhoto() {
+      if (this.selectedChat?.isGroup) {
+        if (this.selectedChat.photo.startsWith('/')) {
+          return this.selectedChat.photo
+        }
+        return 'data:image/jpeg;base64,' + this.selectedChat.photo;
+      }
+      else if (this.selectedChat.participants && this.selectedChat.participants.length > 0) {
+        const otherParticipant = this.selectedChat.participants.find(
+          participant => participant.userId !== this.loggedUser.userId
+        );
+
+        if (otherParticipant && otherParticipant.photo) {
+          const photo = otherParticipant.photo.trim();
+          const DEFAULT_USER_PHOTO = '/images/default-user-avatar.png';
+
+          // Caso 1: è una base64 valida
+          if (photo.startsWith('data:image')) {
+            return photo;
+          }
+          // Caso 2: è un percorso (non base64)
+          if (photo === DEFAULT_USER_PHOTO) {
+            return photo;
+          }
+          // Caso 3: è una stringa base64 senza prefisso
+          return `data:image/png;base64,${photo}`;
+        }
+        return '/images/default-user-avatar.png';
+      }
+    },
+    chatName() {
+      if (this.selectedChat.isGroup) {
+        return this.selectedChat.name || 'Gruppo'; // Nome del gruppo
+      }
+
+      // È una selectedChat privata, trova l'altro partecipante
+      else if (this.selectedChat.participants && this.selectedChat.participants.length > 0) {
+        const otherParticipant = this.selectedChat.participants.find(
+          participant => participant.userId !== this.loggedUser.userId
+        );
+
+        if (otherParticipant && otherParticipant.name) {
+          return otherParticipant.name;
+        }
+      }
+      // Fallback se il nome della selectedChat fornito dal backend è già quello dell'altro utente
+      return this.selectedChat.name || 'Chat';
+    },
+  },
+
   methods: {
     getParticipantNames(chat) {
       if (chat && chat.isGroup && Array.isArray(chat.participants)) {
@@ -26,36 +105,102 @@ export default {
     },
     async loadMessages(chatId) {
       try {
-        const response = await axiosInstance.get(`/chats/${chatId}/messages/status`);
-        this.messages = response.data;
+        const response = await axiosInstance.get(`/chats/${chatId}/messages`);
+        this.messages = response.data || [];
+        console.log("Messaggi caricati: " + JSON.stringify(this.messages, null, 2));
+
       } catch (e) {
         console.error(e);
       }
     },
+    async handleSend() {
+      if (!this.messageText.trim() || !this.selectedChat || !this.selectedChat.chatId) {
+        console.warn("Nessun messaggio da inviare o nessuna chat selezionata.");
+        return;
+      }
+      const textContentForMessage = this.messageText.trim();
+
+      const messagePayload = {
+        senderId: this.loggedUser.userId,
+        content: textContentForMessage,
+      };
+
+      const chatId = this.selectedChat.chatId;
+
+      try {
+        const response = await axiosInstance.post(`/chats/${chatId}/messages`, messagePayload);
+
+        if (response.data) {
+          const newMessage = {
+            id: response.data.id || Date.now(),
+            content: textContentForMessage,
+            senderId: messagePayload.senderId,
+            timestamp: response.data.timestamp || new Date().toISOString(),
+          };
+
+          if (typeof newMessage.content !== 'string' || newMessage.content.trim() === '') {
+            this.loadMessages(chatId);
+          } else {
+            this.messages.push(newMessage);
+            this.$nextTick(() => {
+              const chatBody = this.$refs.chatBody;
+              if (chatBody) {
+                chatBody.scrollTop = chatBody.scrollHeight;
+              }
+            });
+          }
+          this.$emit('message-sent', { chatId, newMessage });
+        } else {
+          this.loadMessages(chatId);
+        }
+        this.messageText = "";
+        
+      } catch (e) {
+        console.error('[handleSend] Errore durante invio del messaggio:', e);
+      }
+    },
+    handleChatDeleted(chatId) {
+      this.showInfo = false;
+      this.$emit('chat-deleted', chatId);
+    }
     }
   }
 </script>
 
 <template>
   <div class="chat-area">
-    
-    <!-- HEADER -->
-    <div class="chat-header" v-if="selectedChat">
-      <img :src="selectedChat.photo" class="chat-photo" />
+
+    <div class="chat-header" v-if="selectedChat" @click="showInfo = true">
+      <img :src="chatPhoto" class="chat-photo" :alt="selectedChat.name" />
       <div class="chat-info">
-        <h2>{{ selectedChat.name }}</h2>
+        <h2>{{ chatName }}</h2>
         <h4 v-if="selectedChat.isGroup" class="participants">
           {{ getParticipantNames(selectedChat) }}
         </h4>
       </div>
     </div>
+    <ChatInfo
+      v-if="showInfo"
+      :chat="selectedChat"
+      :loggedUserId="loggedUser.userId"
+      @close="showInfo = false"
+      @chat-deleted="handleChatDeleted"
+    />
 
-    <!-- BODY -->
-    <div class="chat-body">
+    <div class="chat-body" ref="chatBody">
+      
+      <div v-if="selectedChat && messages.length === 0" class="no-messages">
+        Nessun messaggio in questa chat. Inizia tu la conversazione!
+      </div>
+      <Message
+        v-for="message in messages || []"
+        :key="message.id"
+        :message-data="message"
+        :loggedUser="loggedUser"
+      />
       
     </div>
 
-    <!-- FOOTER -->
     <div class="chat-footer" v-if="selectedChat">
       <div class="input-container">
         <input
@@ -63,10 +208,10 @@ export default {
           placeholder="Scrivi un messaggio..."
           @keyup.enter="handleSend"
         />
-        <button class="send-button" title="Scegli foto" >
+        <button class="send-button" title="Scegli foto">
           <svg class="feather"><use href="/feather-sprite-v4.29.0.svg#image"/></svg>
         </button>
-        <button class="send-button" title="Invia" @click="handleSend">
+        <button class="send-button" title="Invia" @click="handleSend" :disabled="!messageText.trim()">
           <svg class="feather"><use href="/feather-sprite-v4.29.0.svg#send"/></svg>
         </button>
       </div>
@@ -86,12 +231,12 @@ export default {
 }
 
 .chat-header {
-  height: 80px;
-  background-color: rgb(220, 212, 248);
-  border-bottom: 2px solid navy;
+  height: 5rem;
+  background-color: #c7c6e4;
+  border-bottom: 0.1rem solid navy;
   display: flex;
   align-items: center;
-  padding: 0 1rem;
+  padding: 0 2rem;
   box-sizing: border-box;
   flex-shrink: 0;
 }
@@ -118,11 +263,12 @@ export default {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  line-height: 1.4;
 }
 
 .chat-info .participants {
   font-size: 0.9rem;
-  margin: 2px 0 0 0;
+  margin: 0.3rem 0 0 0;
   color: #222;
   white-space: nowrap;
   overflow: hidden;
@@ -132,16 +278,17 @@ export default {
 
 .chat-body {
   flex-grow: 1; 
+  flex-direction: column;
   overflow-y: auto;
   background-color: whitesmoke;
   display: flex;
-  justify-content: center;
+  justify-content: flex-end;
   align-items: center;
   padding: 1rem;
 }
 
 .chat-footer {
-  background-color: rgb(220, 212, 248);
+  background-color: #c7c6e4;
   padding: 0.5rem;
   width: 100%;
   border-top: 2px solid navy;

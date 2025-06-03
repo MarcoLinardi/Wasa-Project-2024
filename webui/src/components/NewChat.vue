@@ -51,12 +51,8 @@ export default {
       <div class="user-info">
         <h3>{{ user.name }}</h3>
       </div>
-      <button 
-        @click="closeChat" 
-        class="close-button"
-        aria-label="Chiudi chat"
-      >
-        &times;
+      <button class="close-button" title="Chiudi" @click="closeChat">
+        <svg class="feather"><use href="/feather-sprite-v4.29.0.svg#x"/></svg>
       </button>
     </div>
 
@@ -91,29 +87,29 @@ export default {
 .new-chat-component {
   display: flex;
   flex-direction: column;
-  height: 100%;
-  width: 100%; 
+  height: 83%;
+  width: 80%; 
   background-color: #ffffff;
   border: 2px solid navy;
-  border-radius: 10px;
-  padding-bottom: 1rem;
+  border-radius: 1rem;
+  overflow: hidden;
+  overflow-y: auto;
 }
 
 /* Header della Chat */
 .chat-header {
   display: flex;
   align-items: center;
-  padding: 20px;
+  padding: 0.6rem;
   border-bottom: 1px solid #e5e7eb;
 }
 
 .user-avatar {
-  width: 48px; 
-  height: 48px;
+  width: 3.2rem; 
+  height: 3.2rem;
   border-radius: 50%;
   object-fit: cover;
   margin-right: 0.75rem;
-  min-width: 48px;
 }
 
 .user-info {
@@ -129,13 +125,22 @@ export default {
 .close-button {
   background: none;
   border: none;
-  font-size: 1.875rem;
-  font-weight: bold;
   color: #6b7280;
   cursor: pointer;
-  padding: 0 0.5rem;
+  padding: 0.5rem;
   line-height: 1;
+  width: 2.5rem;
+  height: 2.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
+
+.close-button .feather {
+  width: 1.5rem;
+  height: 1.5rem;
+}
+
 
 .close-button:hover {
   color: #374151;
@@ -144,7 +149,7 @@ export default {
 /* Corpo della Chat */
 .chat-body {
   flex-grow: 1;
-  padding: 1rem;
+  
   background-color: #f9fafb;
 }
 
@@ -153,7 +158,7 @@ export default {
   color: #4b5563;
   font-style: italic;
   text-align: center;
-  margin-top: 2rem;
+  margin-top: 1rem;
 }
 
 /* Area Input Messaggio */
