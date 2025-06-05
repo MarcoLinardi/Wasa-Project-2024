@@ -99,6 +99,18 @@ export default {
       if (this.selectedChat && this.selectedChat.chatId === chatId) {
         this.selectedChat = null;
       }
+    },
+    onUserLeftGroup(chatId) {
+      console.log("Utente uscito dal gruppo con chatId:", chatId);
+
+      // Esempio: rimuovi la chat dalla lista
+      this.chats = this.chats.filter(c => c.chatId !== chatId);
+
+      // Esempio: deseleziona la chat attiva
+      this.selectedChat = null;
+
+      // Naviga o aggiorna
+      this.$router.push('/home');
     }
   }
 }
@@ -138,6 +150,7 @@ export default {
         @select-chat="handleChatSelected"
         @message-sent="handleMessageSent"
         @chat-deleted="handleChatDeleted"
+        @left-group="onUserLeftGroup"
       />
     </div>
     <div v-else class="chat-placeholder"> <p>Seleziona una chat per visualizzare i messaggi.</p>

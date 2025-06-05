@@ -921,8 +921,10 @@ paths:
               type: object
               description: Schema of added user
               properties:
-                userId:
-                  $ref: "#/components/schemas/User/properties/userId"
+                userIds:
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/User/properties/userId"
       
       responses:
         '201':
@@ -955,10 +957,6 @@ paths:
         '404':
           description: Message or reaction not found
   
-  /chats/{chat_id}/members/{user_id}:
-    parameters:
-      - $ref: "#/components/parameters/ChatId"
-      - $ref: "#/components/parameters/UserId"
 
     delete:
       tags: 

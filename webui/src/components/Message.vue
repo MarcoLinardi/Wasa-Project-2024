@@ -1,5 +1,12 @@
 <script>
 export default {
+  data() {
+    return {
+      showMenu: false,
+      emojiPickerVisible: false,
+      reaction: null
+    };
+  },
   props: {
     messageData: {
       type: Object,
@@ -10,9 +17,11 @@ export default {
       required: true
     }
   },
+  mounted() {
+    document.addEventListener("click", this.handleOutsideClick);
+  },
   computed: {
     isSentByLoggedUser() {
-      // Confronta il senderId del messaggio con l'ID dell'utente corrente
       return this.messageData.senderId === this.loggedUser.userId;
     },
     formattedTimestamp() {
@@ -21,17 +30,82 @@ export default {
       // Formatta l'ora come HH:MM
       return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
     }
+  },
+  methods: {
+    toggleMenu(event) {
+      this.showMenu = !this.showMenu;
+      // evita chiusura immediata del menu cliccando sul bottone
+      event.stopPropagation();
+    },
+    handleOutsideClick(event) {
+      // chiudi solo se showMenu è true e il click è fuori dal messaggio
+      if (this.showMenu && !this.$el.contains(event.target)) {
+        this.showMenu = false;
+      }
+    },
+    onReply() {
+      this.$emit("reply", this.messageData);
+      this.showMenu = false;
+    },
+    onForward() {
+      this.$emit("forward", this.messageData);
+      this.showMenu = false;
+    },
+    onDelete() {
+      this.$emit("delete", this.messageData);
+      this.showMenu = false;
+    },
+    toggleEmojiPicker() {
+      this.emojiPickerVisible = !this.emojiPickerVisible;
+    },
+    react(emoji) {
+      this.reaction = emoji;
+      this.emojiPickerVisible = false;
+      this.showMenu = false;
+    },
+    removeReaction() {
+      this.reaction = null;
+    }
   }
 }
 </script>
 
 <template>
   <div class="message-wrapper" :class="{ 'sent-wrapper': isSentByLoggedUser, 'received-wrapper': !isSentByLoggedUser }">
-    <div class="message-item" :class="{ 'sent': isSentByLoggedUser, 'received': !isSentByLoggedUser }">
-      <div class="message-content">
-        <p class="message-text">{{ messageData.content }}</p>
-        <span class="message-timestamp">{{ formattedTimestamp }}</span>
+   <div class="message-item" :class="{ 'sent': isSentByLoggedUser, 'received': !isSentByLoggedUser }">
+      <!-- Wrapper: messaggio + menu -->
+      <div class="message-body-wrapper" :class="{ 'sent-align': isSentByLoggedUser, 'received-align': !isSentByLoggedUser }">
+        
+        <!-- Bottone menu -->
+        <button class="message-menu-btn" @click="toggleMenu">
+          <svg class="feather"><use href="/feather-sprite-v4.29.0.svg#chevron-up"/></svg>
+        </button>
+
+        <!-- Messaggio -->
+        <div class="message-content">
+          <p class="message-text">{{ messageData.content }}</p>
+          <span v-if="reaction" class="reaction" @click="removeReaction">{{ reaction }}</span>
+          <span class="message-timestamp">{{ formattedTimestamp }}</span>
+        </div>
+
+        <!-- Menù a tendina -->
+        <div v-if="showMenu" class="message-menu-dropdown" :class="isSentByLoggedUser ? 'dropdown-left' : 'dropdown-right'">
+          <ul>
+            <li @click="onReply">Rispondi</li>
+            <li @click="onForward">Inoltra</li>
+            <li @click="onDelete">Elimina</li>
+            <li @click="toggleEmojiPicker">Reagisci</li>
+          </ul>
+        </div>
+        <div v-if="emojiPickerVisible" class="emoji-picker">
+          <span @click="react('👍')">👍</span>
+          <span @click="react('😂')">😂</span>
+          <span @click="react('❤️')">❤️</span>
+          <span @click="react('😮')">😮</span>
+          <span @click="react('😢')">😢</span>
+        </div>
       </div>
+
     </div>
   </div>
 </template>
@@ -57,12 +131,16 @@ export default {
 }
 
 .message-content {
-  padding: 10px 15px;
+  padding: 0.7rem 1rem;
   border-radius: 1.3rem;
   position: relative;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 0.2rem 0.3rem rgba(0, 0, 0, 0.1);
 }
 
+/* Mostra il bottone solo quando si passa sopra l’intero messaggio */
+.message-item:hover .message-menu-btn {
+  opacity: 1;
+}
 
 .message-item.sent .message-content {
   background-color: #6565deca;
@@ -73,7 +151,6 @@ export default {
 .message-item.received .message-content {
   background-color: rgba(78, 139, 183, 0.675);
   color: black;
-  border: 1px solid #f0f0f0; 
   border-bottom-left-radius: 0.2rem;
   
 }
@@ -81,12 +158,12 @@ export default {
 .sender-name {
   font-size: 0.8em;
   font-weight: bold;
-  margin-bottom: 4px;
+  margin-bottom: 0.25;
   color: #555;
 }
 
 .message-text {
-  margin: 0 0 5px 0;
+  margin: 0 0 0.40rem 0;
   white-space: pre-wrap;
   font-size: 0.95em;
   line-height: 1.4;
@@ -97,7 +174,87 @@ export default {
   color: rgba(0, 0, 0, 0.512);
   display: block;
   text-align: right;
-  margin-top: 4px;
+  margin-top: 0.25rem;
+}
+
+.message-body-wrapper {
+  display: flex;
+  align-items: flex-start;
+  position: relative;
+  margin-bottom: 0.25rem;
+}
+
+.sent-align {
+  flex-direction: row;
+  justify-content: flex-end;
+}
+
+.received-align {
+  flex-direction: row-reverse;
+  justify-content: flex-start;
+}
+
+.message-menu-btn {
+  background: transparent;
+  border: none;
+  font-size: 1rem;
+  cursor: pointer;
+  margin: 0 0.37rem;
+  padding: 0;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.message-content {
+  position: relative;
+  max-width: 18rem;
+  word-break: break-word;
+}
+
+.message-menu-dropdown {
+  position: absolute;
+  top: 0;
+  transform: translateY(-64px); /* allinea l'ultimo elemento al bottone */
+  background: #c7c6e4;
+  border: 1px solid #ccc;
+  border-radius: 0.6rem;
+  box-shadow: 0 0.15rem 0.37rem rgba(0, 0, 0, 0.2);
+  z-index: 100;
+  min-width: 100px;
+}
+
+.dropdown-left {
+  /* Menu che esce verso sinistra (per messaggi inviati a destra) */
+  right: 100%;  /* si aggancia a sinistra del bottone */
+  margin-right: 0.37rem;
+}
+
+.dropdown-right {
+  /* Menu che esce verso destra (per messaggi ricevuti a sinistra) */
+  left: 100%;  /* si aggancia a destra del bottone */
+  margin-left: 0.37rem;
+}
+
+.message-menu-dropdown ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.message-menu-dropdown li {
+  padding: 0.37rem 0.75rem;
+  cursor: pointer;
+}
+
+.message-menu-dropdown li:hover {
+  background-color: #dcdbe3;
+}
+
+.reaction {
+  margin-left: 8px;
+  cursor: pointer;
+  font-size: 1.1rem;
+  user-select: none;
 }
 
 </style>

@@ -94,15 +94,16 @@ export default {
       // Fallback se il nome della selectedChat fornito dal backend è già quello dell'altro utente
       return this.selectedChat.name || 'Chat';
     },
-  },
-
-  methods: {
-    getParticipantNames(chat) {
+    participantNames() {
+      const chat = this.selectedChat;
       if (chat && chat.isGroup && Array.isArray(chat.participants)) {
         return chat.participants.map(p => p.name).join(', ');
       }
       return '';
-    },
+    }
+  },
+
+  methods: {
     async loadMessages(chatId) {
       try {
         const response = await axiosInstance.get(`/chats/${chatId}/messages`);
@@ -162,6 +163,28 @@ export default {
     handleChatDeleted(chatId) {
       this.showInfo = false;
       this.$emit('chat-deleted', chatId);
+    },
+    handleCloseMemberManager({ added, removed }) {
+      if (!this.selectedChat || !Array.isArray(this.selectedChat.participants)) {
+        console.warn("chat o chat.participants non disponibile");
+        return;
+      }
+
+      // Aggiungi nuovi utenti
+      for (const user of added) {
+        if (!this.selectedChat.participants.some(p => p.userId === user.userId)) {
+          this.selectedChat.participants.push(user);
+        }
+      }
+
+      // Rimuovi utenti (se implementato)
+      const removedIds = removed.map(u => u.userId);
+      this.selectedChat.participants = this.selectedChat.participants.filter(
+        p => !removedIds.includes(p.userId)
+      );
+    },
+    handleLeaveGroup(chatId) {
+      this.$emit("left-group", chatId);
     }
     }
   }
@@ -175,7 +198,7 @@ export default {
       <div class="chat-info">
         <h2>{{ chatName }}</h2>
         <h4 v-if="selectedChat.isGroup" class="participants">
-          {{ getParticipantNames(selectedChat) }}
+          {{ participantNames }}
         </h4>
       </div>
     </div>
@@ -183,8 +206,10 @@ export default {
       v-if="showInfo"
       :chat="selectedChat"
       :loggedUserId="loggedUser.userId"
-      @close="showInfo = false"
+      @close-modal="showInfo = false"
       @chat-deleted="handleChatDeleted"
+      @close="handleCloseMemberManager"
+      @left-group="handleLeaveGroup"
     />
 
     <div class="chat-body" ref="chatBody">

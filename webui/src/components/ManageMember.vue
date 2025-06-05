@@ -54,35 +54,97 @@ export default {
     isAlreadyMember(user) {
       return this.groupMembers.some(member => member.userId === user.userId);
     },
+
     isSelected(user) {
-      return this.selectedToAdd.includes(user) || this.selectedToRemove.includes(user);
+      return (this.selectedToAdd.includes(user.userId) || this.selectedToRemove.includes(user.userId));
     },
 
     toggleUser(user) {
       if (this.isAlreadyMember(user)) {
-        this.toggleSelection(user, this.selectedToRemove);
+        this.toggleSelection(user.userId, this.selectedToRemove);
       } else {
-        this.toggleSelection(user, this.selectedToAdd);
+        this.toggleSelection(user.userId, this.selectedToAdd);
       }
     },
 
-    toggleSelection(user, list) {
-      const index = list.findIndex(u => u.userId === user.userId);
-      if (index === -1) list.push(user);
+    toggleSelection(userId, list) {
+      const index = list.indexOf(userId);
+      if (index === -1) list.push(userId);
       else list.splice(index, 1);
     },
 
+
     async addSelected() {
-      // TODO: chiamata API per aggiungere selectedToAdd
       const chatId = this.chat.chatId;
-      const response = await axiosInstance.post(`/chats/${chatId}/members`)
+      console.log("utenti selectedAdd: " + this.selectedToAdd)
+      
+      if (!chatId || !this.selectedToAdd.length) {
+        console.warn("Chat ID mancante o nessun utente selezionato");
+        return;
+      }
+
+      try {
+        const payload = {userIds: [...this.selectedToAdd]};
+        console.log("Payload finale:", payload, JSON.stringify(payload));
+        const response = await axiosInstance.post(`/chats/${chatId}/members`, payload);
+
+        console.log("Membri aggiunti:", response.data);
+        const addedUsers = this.users.filter(user =>
+          this.selectedToAdd.includes(user.userId)
+        );
+        const removedUsers = this.users.filter(user =>
+          this.selectedToRemove.includes(user.userId)
+        )
+
+        // Emit oggetti utente completi
+        this.$emit('close', {added: addedUsers, removed: removedUsers});
+
+        // Pulisci
+        this.selectedToAdd = [];
+        this.selectedToRemove = [];
+
+      } catch (error) {
+        console.error("Errore durante l'aggiunta dei membri:", error);
+      }
     },
 
     async removeSelected() {
-      // TODO: chiamata API per rimuovere selectedToRemove
-      console.log("Rimuovi utenti:", this.selectedToRemove);
-      this.selectedToRemove = [];
-    }
+      const chatId = this.chat.chatId;
+      console.log("utenti selectedRemove: ", this.selectedToRemove);
+
+      if (!chatId || !this.selectedToRemove.length) {
+        console.warn("Chat ID mancante o nessun utente da rimuovere selezionato");
+        return;
+      }
+
+      try {
+        const payload = { userIds: [...this.selectedToRemove] };
+        console.log("Payload rimozione:", payload, JSON.stringify(payload));
+
+        const response = await axiosInstance.delete(`/chats/${chatId}/members`, {data: payload
+        });
+
+        console.log("Membri rimossi:", response.data);
+
+        const removedUsers = this.users.filter(user =>
+          this.selectedToRemove.includes(user.userId)
+        );
+        const addedUsers = this.users.filter(user =>
+          this.selectedToAdd.includes(user.userId)
+        );
+
+        // Emit oggetti utente completi aggiornati
+        this.$emit('close', { added: addedUsers, removed: removedUsers });
+
+        // Pulisci
+        this.selectedToAdd = [];
+        this.selectedToRemove = [];
+
+      } catch (error) {
+        console.error("Errore durante la rimozione dei membri:", error);
+      }
+    },
+
   }
 }
 </script>
@@ -94,7 +156,7 @@ export default {
       <!-- Header -->
       <div class="modal-header">
         <h2>Gestisci Membri</h2>
-        <button @click="$emit('close')" class="close-button">&times;</button>
+        <button @click="$emit('close-modal')" class="close-button">&times;</button>
       </div>
 
       <!-- Ricerca -->

@@ -19,7 +19,7 @@ func (rt *_router) addMemberToGroup(w http.ResponseWriter, r *http.Request, ps h
 		return
 	}
 	var requestBody struct {
-		UserID int `json:"userId"`
+		UserIDs []int `json:"userIds"`
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&requestBody); err != nil {
@@ -27,21 +27,23 @@ func (rt *_router) addMemberToGroup(w http.ResponseWriter, r *http.Request, ps h
 		return
 	}
 
-	if requestBody.UserID == 0 {
+	if len(requestBody.UserIDs) == 0 {
 		http.Error(w, `{"error": "User ID is required"}`, http.StatusBadRequest)
 		return
 	}
 
 	// Aggiunge l'utente al gruppo
-	err = rt.db.AddMemberToGroup(chatID, requestBody.UserID)
-	if err != nil {
-		if err.Error() == "chat is not a group" {
-			http.Error(w, `{"error": "Cannot add members to a non-group chat"}`, http.StatusBadRequest)
+	for _, UserID := range requestBody.UserIDs {
+		err = rt.db.AddMemberToGroup(chatID, UserID)
+		if err != nil {
+			if err.Error() == "chat is not a group" {
+				http.Error(w, `{"error": "Cannot add members to a non-group chat"}`, http.StatusBadRequest)
+				return
+			}
+			http.Error(w, `{"error": "Failed to add member"}`, http.StatusInternalServerError)
+			ctx.Logger.WithError(err).Error("Failed to add member to group")
 			return
 		}
-		http.Error(w, `{"error": "Failed to add member"}`, http.StatusInternalServerError)
-		ctx.Logger.WithError(err).Error("Failed to add member to group")
-		return
 	}
 
 	w.WriteHeader(http.StatusCreated)

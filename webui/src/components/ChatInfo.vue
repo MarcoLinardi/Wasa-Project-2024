@@ -167,7 +167,37 @@ export default {
     },
     closeMemberManager() {
       this.isManagingMembers = false;
+    },
+    handleCloseFromMember(payload) {
+      this.isManagingMembers = false;
+      this.$emit('close', payload); // Propaga a ChatArea
+    },
+    async leaveGroup() {
+      const chatId = this.chat.chatId;
+      const userId = this.loggedUserId;
+
+      if (!chatId || !userId) {
+        console.warn("Chat ID o utente loggato mancante");
+        return;
+      }
+
+      try {
+        const payload = { userIds: [userId] };
+        console.log("Leaving group:", payload);
+
+        const response = await axiosInstance.delete(`/chats/${chatId}/members`, {
+          data: payload
+        });
+
+        console.log("Sei uscito dal gruppo:", response.data);
+
+        // Emetti evento o naviga altrove
+        this.$emit("left-group", chatId);
+      } catch (error) {
+        console.error("Errore durante l'uscita dal gruppo:", error);
+      }
     }
+
   }
 };
 </script>
@@ -175,7 +205,7 @@ export default {
 <template>
   <div class="chat-details-overlay" @click.self="$emit('close')">
     <div class="chat-details-modal">
-      <button class="close-button" title="Chiudi" @click="$emit('close')">
+      <button class="close-button" title="Chiudi" @click="$emit('close-modal')">
         <svg class="feather"><use href="/feather-sprite-v4.29.0.svg#x"/></svg>
       </button>
 
@@ -233,8 +263,13 @@ export default {
         </div>
       </div>
       
+      <div v-if="this.chat.isGroup" class="leave-group-container">
+        <button class="leaveGroup-button" @click="leaveGroup">
+          Abbandona Gruppo
+        </button>
+      </div>
 
-      <div class="delete-container">
+      <div v-else class="delete-container">
         <button class="delete-button" title="Elimina Chat" @click="isDeletingChat = !isDeletingChat">
           <svg class="feather"><use href="/feather-sprite-v4.29.0.svg#trash-2"/></svg>
           <span>Elimina Chat</span>
@@ -252,7 +287,8 @@ export default {
         v-if="isManagingMembers"
         :group-members="chat.participants"
         :chat="chat"
-        @close="closeMemberManager"
+        @close-modal="closeMemberManager"
+        @close="handleCloseFromMember"
       />
     </div>
   </div>
@@ -467,7 +503,7 @@ export default {
   transition: background-color 0.3s ease;
 }
 
-.add-member-button:hover {
+.edit-member-button:hover {
   background-color: #6159d9;
 }
 
@@ -488,6 +524,35 @@ export default {
   margin-top: 0;
 }
 
+.leave-group-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.leaveGroup-button {
+  background: #7a1e1e;
+  border: none;
+  border-radius: 0.6rem;
+  padding: 0.6rem 1rem;
+  margin-bottom: -0.3rem;
+  text-align: left;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: white;
+  box-shadow:
+    0.125rem 0.125rem 0.375rem rgba(0, 0, 0, 1),
+    1px 1px 10px rgba(255, 255, 255, 0.6);
+  transition: background-color 0.3s ease;
+}
+
+.leaveGroup-button:hover {
+  background-color: #c0392b;
+}
 
 /* Bottone principale */
 .delete-button {
