@@ -1,4 +1,5 @@
 <script>
+import axiosInstance from "@/services/axios";
 export default {
   data() {
     return {
@@ -8,7 +9,11 @@ export default {
     };
   },
   props: {
-    messageData: {
+    chat: {
+      type: Object,
+      required: true
+    },
+    message: {
       type: Object,
       required: true,
     },
@@ -22,11 +27,11 @@ export default {
   },
   computed: {
     isSentByLoggedUser() {
-      return this.messageData.senderId === this.loggedUser.userId;
+      return this.message.senderId === this.loggedUser.userId;
     },
     formattedTimestamp() {
-      if (!this.messageData.timestamp) return '';
-      const date = new Date(this.messageData.timestamp);
+      if (!this.message.timestamp) return '';
+      const date = new Date(this.message.timestamp);
       // Formatta l'ora come HH:MM
       return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
     }
@@ -44,24 +49,31 @@ export default {
       }
     },
     onReply() {
-      this.$emit("reply", this.messageData);
+      this.$emit("reply", this.message);
       this.showMenu = false;
     },
     onForward() {
-      this.$emit("forward", this.messageData);
+      this.$emit("forward", this.message);
       this.showMenu = false;
     },
     onDelete() {
-      this.$emit("delete", this.messageData);
+      this.$emit("delete", this.message);
       this.showMenu = false;
     },
     toggleEmojiPicker() {
       this.emojiPickerVisible = !this.emojiPickerVisible;
     },
-    react(emoji) {
-      this.reaction = emoji;
-      this.emojiPickerVisible = false;
-      this.showMenu = false;
+    async react(reaction) {
+      try {
+        const response = await axiosInstance.post(`/chats/${this.chat.chatId}/messages/${this.message.messageId}/reactions`, { reaction });
+
+        this.message.reaction = reaction;
+        this.emojiPickerVisible = false;
+        this.showMenu = false;
+        this.$emit("reload-messages")
+        } catch (err) {
+          console.error('Errore di rete:', err);
+        }
     },
     removeReaction() {
       this.reaction = null;
@@ -83,8 +95,12 @@ export default {
 
         <!-- Messaggio -->
         <div class="message-content">
-          <p class="message-text">{{ messageData.content }}</p>
-          <span v-if="reaction" class="reaction" @click="removeReaction">{{ reaction }}</span>
+          <p class="message-text">{{ message.content }}</p>
+          <div v-if="message.reactions && message.reactions.length" class="reaction-group">
+            <span v-for="(r, index) in message.reactions" :key="r.userId + '-' + index" class="reaction">
+              {{ r.reaction }}
+            </span>
+          </div>
           <span class="message-timestamp">{{ formattedTimestamp }}</span>
         </div>
 
@@ -96,13 +112,14 @@ export default {
             <li @click="onDelete">Elimina</li>
             <li @click="toggleEmojiPicker">Reagisci</li>
           </ul>
-        </div>
-        <div v-if="emojiPickerVisible" class="emoji-picker">
-          <span @click="react('👍')">👍</span>
-          <span @click="react('😂')">😂</span>
-          <span @click="react('❤️')">❤️</span>
-          <span @click="react('😮')">😮</span>
-          <span @click="react('😢')">😢</span>
+        
+          <div v-if="emojiPickerVisible" class="emoji-picker">
+            <span @click="react('👍')">👍</span>
+            <span @click="react('😂')">😂</span>
+            <span @click="react('❤️')">❤️</span>
+            <span @click="react('😮')">😮</span>
+            <span @click="react('😢')">😢</span>
+          </div>
         </div>
       </div>
 
@@ -214,7 +231,9 @@ export default {
 .message-menu-dropdown {
   position: absolute;
   top: 0;
-  transform: translateY(-64px); /* allinea l'ultimo elemento al bottone */
+  display: flex;
+  flex-direction: row-reverse;
+  transform: translateY(-6rem); /* allinea l'ultimo elemento al bottone */
   background: #c7c6e4;
   border: 1px solid #ccc;
   border-radius: 0.6rem;
@@ -224,14 +243,12 @@ export default {
 }
 
 .dropdown-left {
-  /* Menu che esce verso sinistra (per messaggi inviati a destra) */
-  right: 100%;  /* si aggancia a sinistra del bottone */
+  right: 100%;
   margin-right: 0.37rem;
 }
 
 .dropdown-right {
-  /* Menu che esce verso destra (per messaggi ricevuti a sinistra) */
-  left: 100%;  /* si aggancia a destra del bottone */
+  left: 100%;
   margin-left: 0.37rem;
 }
 
@@ -250,11 +267,34 @@ export default {
   background-color: #dcdbe3;
 }
 
-.reaction {
-  margin-left: 8px;
+.emoji-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  background-color: white;
+  border-radius: 8px;
+  padding: 6px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   cursor: pointer;
+}
+
+.reaction-group {
+  display: flex;
+  gap: 0.33rem;
+  margin-top: 0.25rem;
+  margin-left: 0.33rem;
+  align-items: center;
+}
+
+.reaction {
+  position: absolute;
+  bottom: -0.6rem;  /* sposta la reaction metà fuori e metà dentro */
+  left: 50%;
+  transform: translateX(-50%);
   font-size: 1.1rem;
+  cursor: pointer;
   user-select: none;
+  z-index: 2
 }
 
 </style>

@@ -31,8 +31,8 @@ func (rt *_router) Handler() http.Handler {
 	rt.router.DELETE("/chats/:chatId/messages/:messageId/reactions", rt.wrap(rt.bearerAuth(rt.deleteReaction))) // testato
 
 	// Group Operations
-	rt.router.POST("/chats/:chatId/members", rt.wrap(rt.bearerAuth(rt.addMemberToGroup)))      // testato
-	rt.router.DELETE("/chats/:chatId/members", rt.wrap(rt.bearerAuth(rt.removeMemberToGroup))) // testato
+	rt.router.POST("/chats/:chatId/members", rt.wrap(rt.bearerAuth(rt.addMemberToGroup)))      // testato + frontend
+	rt.router.DELETE("/chats/:chatId/members", rt.wrap(rt.bearerAuth(rt.removeMemberToGroup))) // testato + frontend
 	rt.router.PUT("/chats/:chatId/name", rt.wrap(rt.bearerAuth(rt.setGroupName)))              // testato + frontend
 	rt.router.PUT("/chats/:chatId/photo", rt.wrap(rt.bearerAuth(rt.setGroupPhoto)))            // testato + frontend
 

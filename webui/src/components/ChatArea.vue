@@ -29,7 +29,7 @@ export default {
     selectedChat: {
       handler(newChat, oldChat) {
         if (newChat && newChat.chatId && (!oldChat || newChat.chatId !== oldChat.chatId)) {
-          this.loadMessages(newChat.chatId);
+          this.loadMessages();
         } else if (!newChat) {
           this.messages = [];
         }
@@ -104,9 +104,9 @@ export default {
   },
 
   methods: {
-    async loadMessages(chatId) {
+    async loadMessages() {
       try {
-        const response = await axiosInstance.get(`/chats/${chatId}/messages`);
+        const response = await axiosInstance.get(`/chats/${this.selectedChat.chatId}/messages`);
         this.messages = response.data || [];
         console.log("Messaggi caricati: " + JSON.stringify(this.messages, null, 2));
 
@@ -140,7 +140,7 @@ export default {
           };
 
           if (typeof newMessage.content !== 'string' || newMessage.content.trim() === '') {
-            this.loadMessages(chatId);
+            this.loadMessages();
           } else {
             this.messages.push(newMessage);
             this.$nextTick(() => {
@@ -152,9 +152,10 @@ export default {
           }
           this.$emit('message-sent', { chatId, newMessage });
         } else {
-          this.loadMessages(chatId);
+          this.loadMessages();
         }
         this.messageText = "";
+        this.loadMessages();
         
       } catch (e) {
         console.error('[handleSend] Errore durante invio del messaggio:', e);
@@ -220,8 +221,10 @@ export default {
       <Message
         v-for="message in messages || []"
         :key="message.id"
-        :message-data="message"
+        :message="message"
         :loggedUser="loggedUser"
+        :chat="selectedChat"
+        @reload-messages="loadMessages"
       />
       
     </div>
