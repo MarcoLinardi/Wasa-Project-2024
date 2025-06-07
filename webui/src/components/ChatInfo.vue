@@ -55,6 +55,7 @@ export default {
         }
         return '/images/default-user-avatar.png';
       }
+      return '/images/default-user-avatar.png';
     },
     chatName() {
       if (this.chat.isGroup) {

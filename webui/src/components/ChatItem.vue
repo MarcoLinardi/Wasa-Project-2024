@@ -69,9 +69,9 @@ export default {
           // Caso 3: è una stringa base64 *senza* prefisso
           return `data:image/png;base64,${photo}`;
         }
-
         return '/images/default-user-avatar.png'; // Fallback definitivo
       }
+      return '/images/default-user-avatar.png';
     },
 
     displayName() {
