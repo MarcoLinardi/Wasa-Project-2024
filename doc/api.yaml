@@ -179,17 +179,7 @@ components:
       required: true
       in: path
       name: msg_id
-    
-    UserId:
-      schema:
-        type: integer 
-        minimum: 1
-        maximum: 1000
-        example: 2
-      description: Unique user id
-      required: true
-      in: path
-      name: user_id
+
 
 tags:
   - name: User
@@ -629,10 +619,9 @@ paths:
                       timestamp: "2024-11-27T10:32:00Z"
                       status: "read"
 
-  /chats/{chat_id}/messages/{msg_id}/status:
+  /chats/{chat_id}/messages/status:
     parameters:
           - $ref: "#/components/parameters/ChatId"
-          - $ref: "#/components/parameters/MsgId"
 
     put:
       tags:
@@ -923,6 +912,9 @@ paths:
               properties:
                 userIds:
                   type: array
+                  description: List of user IDs to add to the group
+                  minItems: 1
+                  maxItems: 50
                   items:
                     $ref: "#/components/schemas/User/properties/userId"
       
