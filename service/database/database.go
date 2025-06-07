@@ -96,6 +96,7 @@ type Message struct {
 	MessageID   int        `json:"messageId"`
 	SenderID    int        `json:"senderId"`
 	Content     string     `json:"content"`
+	Photo       *string    `json:"photo,omitempty"`
 	Timestamp   string     `json:"timestamp"`
 	Status      string     `json:"status"`
 	IsForwarded bool       `json:"isForwarded"`
@@ -166,7 +167,8 @@ func New(db *sql.DB) (AppDatabase, error) {
 		sqlStmt := `CREATE TABLE messages (messageId INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
 										chatId INTEGER NOT NULL,
 										senderId INTEGER NOT NULL,
-										content TEXT NOT NULL,
+										content TEXT DEFAULT NULL,
+										photo TEXT DEFAULT NULL,
 										timestamp TEXT NOT NULL,
 										status TEXT DEFAULT 'sent',
 										isForwarded BOOLEAN DEFAULT 0, 

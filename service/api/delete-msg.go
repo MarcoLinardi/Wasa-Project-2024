@@ -18,7 +18,6 @@ func (rt *_router) deleteMessage(w http.ResponseWriter, r *http.Request, ps http
 		http.Error(w, `{"error": "Invalid chat ID"}`, http.StatusBadRequest)
 		return
 	}
-
 	messageID, err := strconv.Atoi(msgIDStr)
 	if err != nil {
 		http.Error(w, `{"error": "Invalid message ID"}`, http.StatusBadRequest)
@@ -44,7 +43,6 @@ func (rt *_router) deleteMessage(w http.ResponseWriter, r *http.Request, ps http
 		ctx.Logger.WithError(err).Error("Failed to delete message")
 		return
 	}
-
 	w.WriteHeader(http.StatusOK)
 	if _, err := w.Write([]byte(`{"message": "Message deleted successfully"}`)); err != nil {
 		log.Printf("error writing response: %v", err)

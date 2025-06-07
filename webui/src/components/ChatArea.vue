@@ -75,6 +75,7 @@ export default {
         }
         return '/images/default-user-avatar.png';
       }
+      return;
     },
     chatName() {
       if (this.selectedChat.isGroup) {
@@ -120,12 +121,10 @@ export default {
         return;
       }
       const textContentForMessage = this.messageText.trim();
-
       const messagePayload = {
         senderId: this.loggedUser.userId,
         content: textContentForMessage,
       };
-
       const chatId = this.selectedChat.chatId;
 
       try {
@@ -186,7 +185,18 @@ export default {
     },
     handleLeaveGroup(chatId) {
       this.$emit("left-group", chatId);
+    },
+    async deleteMessage(message) {
+      const chatId = this.selectedChat.chatId;
+      const messageId = message.messageId;
+      try {
+        await axiosInstance.delete(`/chats/${chatId}/messages/${messageId}`);
+        this.loadMessages();
+      } catch (e) {
+        console.error("Errore eliminazione:", e);
+      }
     }
+
     }
   }
 </script>
@@ -225,6 +235,7 @@ export default {
         :loggedUser="loggedUser"
         :chat="selectedChat"
         @reload-messages="loadMessages"
+        @delete="deleteMessage"
       />
       
     </div>

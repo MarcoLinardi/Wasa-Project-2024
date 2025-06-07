@@ -169,7 +169,8 @@ export default {
               </button>
             </div>
           </div>
-
+        </div>
+        
         <!-- Menù a tendina -->
         <div v-if="showMenu" class="message-menu-dropdown" :class="isSentByLoggedUser ? 'dropdown-left' : 'dropdown-right'">
           <ul>
@@ -178,7 +179,6 @@ export default {
             <li @click="onDelete">Elimina</li>
             <li @click="toggleEmojiPicker">Reagisci</li>
           </ul>
-        
           <div v-if="emojiPickerVisible" class="emoji-picker">
             <span @click="react('👍')">👍</span>
             <span @click="react('😂')">😂</span>
@@ -190,7 +190,6 @@ export default {
       </div>
 
     </div>
-  </div>
   </div>
 </template>
 
