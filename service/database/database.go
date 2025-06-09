@@ -100,6 +100,7 @@ type Message struct {
 	Timestamp   string     `json:"timestamp"`
 	Status      string     `json:"status"`
 	IsForwarded bool       `json:"isForwarded"`
+	ReplyToID   *int       `json:"replyToId,omitempty"`
 	Reactions   []Reaction `json:"reactions"`
 }
 
@@ -171,9 +172,11 @@ func New(db *sql.DB) (AppDatabase, error) {
 										photo TEXT DEFAULT NULL,
 										timestamp TEXT NOT NULL,
 										status TEXT DEFAULT 'sent',
-										isForwarded BOOLEAN DEFAULT 0, 
+										isForwarded BOOLEAN DEFAULT 0,
+										replyToId INTEGER DEFAULT NULL,
 										FOREIGN KEY (chatId) REFERENCES chats_table(chatId) ON DELETE CASCADE,
-										FOREIGN KEY (senderId) REFERENCES users_table(userId) ON DELETE CASCADE
+										FOREIGN KEY (senderId) REFERENCES users_table(userId) ON DELETE CASCADE,
+										FOREIGN KEY (replyToId) REFERENCES messages(messageId) ON DELETE SET NULL
 										);`
 		_, err = db.Exec(sqlStmt)
 		if err != nil {

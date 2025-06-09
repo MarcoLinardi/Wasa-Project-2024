@@ -92,25 +92,53 @@ export default {
       this.loadChats();
     },
     handleChatDeleted(chatId) {
-      // 1. Rimuovi la chat dall'array reattivo
       this.chats = this.chats.filter(chat => chat.chatId !== chatId);
-
-      // 2. Se era la chat selezionata, deseleziona
       if (this.selectedChat && this.selectedChat.chatId === chatId) {
         this.selectedChat = null;
       }
     },
     onUserLeftGroup(chatId) {
       console.log("Utente uscito dal gruppo con chatId:", chatId);
-
-      // Esempio: rimuovi la chat dalla lista
       this.chats = this.chats.filter(c => c.chatId !== chatId);
-
-      // Esempio: deseleziona la chat attiva
       this.selectedChat = null;
-
-      // Naviga o aggiorna
-      this.$router.push('/home');
+      this.loadChats();
+    },
+    handleMembersUpdate({ added, removed }) {
+      if (!this.selectedChat || !Array.isArray(this.selectedChat.participants)) {
+        console.warn("selectedChat o participants non disponibile");
+        return;
+      }
+      const currentParticipants = [...this.selectedChat.participants];
+      // Aggiungi
+      for (const user of added) {
+        if (!currentParticipants.some(p => p.userId === user.userId)) {
+          currentParticipants.push(user);
+        }
+      }
+      // Rimuovi
+      const removedIds = removed.map(u => u.userId);
+      const updatedParticipants = currentParticipants.filter(
+        p => !removedIds.includes(p.userId)
+      );
+      // Aggiorna selectedChat
+      this.selectedChat = {
+        ...this.selectedChat,
+        participants: updatedParticipants,
+      };
+    },
+    handleChatNameUpdate(newName) {
+      this.selectedChat = {
+        ...this.selectedChat,
+        name: newName
+      };
+      this.loadChats()
+    },
+    handleChatPhotoUpdate(newPhoto) {
+      this.selectedChat = {
+        ...this.selectedChat,
+        photo: newPhoto
+      };
+      this.loadChats()
     }
   }
 }
@@ -151,6 +179,9 @@ export default {
         @message-sent="handleMessageSent"
         @chat-deleted="handleChatDeleted"
         @left-group="onUserLeftGroup"
+        @update-members="handleMembersUpdate"
+        @update-chat-name="handleChatNameUpdate"
+        @update-chat-photo="handleChatPhotoUpdate"
       />
     </div>
     <div v-else class="chat-placeholder"> <p>Seleziona una chat per visualizzare i messaggi.</p>

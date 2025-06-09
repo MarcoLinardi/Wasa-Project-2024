@@ -118,7 +118,7 @@ export default {
         });
 
         if (response.status === 200) {
-          this.chat.name = this.editedName;
+          this.$emit("update-chat-name", this.editedName);
           this.isEditingName = false;
           console.log('Nome aggiornato con successo:', response.data);
         }
@@ -141,7 +141,6 @@ export default {
       const reader = new FileReader();
       reader.onload = () => {
         const base64String = reader.result.split(',')[1]; // Rimuove "data:image/png;base64,"
-        this.chat.photo = base64String;
         this.uploadPhoto(base64String);
       };
       reader.readAsDataURL(file);
@@ -155,9 +154,9 @@ export default {
         });
 
         if (response.status === 200) {
-          this.chat.photo = base64Image;
+          this.$emit("update-chat-photo", base64Image);
+          this.isEditingPhoto = false;
         }
-        this.isEditingPhoto = !this.isEditingPhoto;
       } catch (error) {
         console.error("Errore durante l'upload della foto:", error);
         alert("Errore durante l'upload della foto");

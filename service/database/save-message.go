@@ -28,8 +28,8 @@ func (db *appdbimpl) SaveMessage(chatID int, msg Message) (int, error) {
 	}
 
 	// Inserisce il messaggio nel database
-	result, err := db.c.Exec("INSERT INTO messages (chatId, senderId, content, timestamp) VALUES (?, ?, ?, ?)",
-		chatID, msg.SenderID, msg.Content, msg.Timestamp,
+	result, err := db.c.Exec("INSERT INTO messages (chatId, senderId, content, timestamp, replyToId) VALUES (?, ?, ?, ?, ?)",
+		chatID, msg.SenderID, msg.Content, msg.Timestamp, msg.ReplyToID,
 	)
 	if err != nil {
 		return 0, fmt.Errorf("errore nell'inserimento del messaggio: %w", err)

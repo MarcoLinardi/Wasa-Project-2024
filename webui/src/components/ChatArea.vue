@@ -22,14 +22,23 @@ export default {
     return {
       messageText: "",
       messages: [],
-      showInfo: false
+      users: [],
+      showInfo: false,
+      replyMessage: null,
     };
+  },
+  mounted() {
+    this.loadUsers()
   },
   watch: {
     selectedChat: {
-      handler(newChat, oldChat) {
+      async handler(newChat, oldChat) {
         if (newChat && newChat.chatId && (!oldChat || newChat.chatId !== oldChat.chatId)) {
-          this.loadMessages();
+          // Aspetta finché gli utenti non sono stati caricati
+          while (this.users.length === 0) {
+            await new Promise(resolve => setTimeout(resolve, 100)); // aspetta 100ms
+          }
+          await this.loadMessages();
         } else if (!newChat) {
           this.messages = [];
         }
@@ -108,11 +117,41 @@ export default {
     async loadMessages() {
       try {
         const response = await axiosInstance.get(`/chats/${this.selectedChat.chatId}/messages`);
-        this.messages = response.data || [];
-        console.log("Messaggi caricati: " + JSON.stringify(this.messages, null, 2));
-
+        const rawMessages = response.data || [];
+        // Risolvi i replyTo
+        this.messages = rawMessages.map(msg => {
+          if (msg.replyToId) {
+            const repliedTo = rawMessages.find(m => m.messageId === msg.replyToId);
+            if (repliedTo) {
+              console.log("Replied message trovato:", repliedTo);
+              console.log("Sender ID da cercare:", repliedTo.senderId);
+              console.log("Lista utenti:", this.users);
+              console.log("Nome trovato:", this.getUserNameById?.(repliedTo.senderId));
+              msg.replyTo = {
+                content: repliedTo.content,
+                senderName: this.getUserNameById?.(repliedTo.senderId) || "Utente"
+              };
+            }
+          }
+          return msg;
+        });
       } catch (e) {
-        console.error(e);
+        console.error("[loadMessages] Errore nel caricamento dei messaggi:", e);
+      }
+    },
+    getUserNameById(userId) {
+      const user = this.users?.find(u => u.userId === userId);
+      return user?.name || "Utente";
+    },
+    async loadUsers() {
+      try {
+        const response = await axiosInstance.get("/users");
+        this.users = response.data.users || response.data;
+        this.users.push(this.loggedUser);
+        this.users.sort((a, b) => (a.name || "").localeCompare(b.name || ""));
+      } catch (e) {
+        console.error("[loadUsers] Errore nel caricamento degli utenti:", e);
+        this.users = [];
       }
     },
     async handleSend() {
@@ -124,6 +163,7 @@ export default {
       const messagePayload = {
         senderId: this.loggedUser.userId,
         content: textContentForMessage,
+        ...(this.replyMessage && { replyToId: this.replyMessage.messageId })
       };
       const chatId = this.selectedChat.chatId;
 
@@ -132,10 +172,11 @@ export default {
 
         if (response.data) {
           const newMessage = {
-            id: response.data.id || Date.now(),
+            messageId: response.data.id || Date.now(),
             content: textContentForMessage,
             senderId: messagePayload.senderId,
             timestamp: response.data.timestamp || new Date().toISOString(),
+            ...(this.replyMessage && { replyToId: this.replyMessage })
           };
 
           if (typeof newMessage.content !== 'string' || newMessage.content.trim() === '') {
@@ -154,6 +195,7 @@ export default {
           this.loadMessages();
         }
         this.messageText = "";
+        this.replyMessage = null;
         this.loadMessages();
         
       } catch (e) {
@@ -165,23 +207,7 @@ export default {
       this.$emit('chat-deleted', chatId);
     },
     handleCloseMemberManager({ added, removed }) {
-      if (!this.selectedChat || !Array.isArray(this.selectedChat.participants)) {
-        console.warn("chat o chat.participants non disponibile");
-        return;
-      }
-
-      // Aggiungi nuovi utenti
-      for (const user of added) {
-        if (!this.selectedChat.participants.some(p => p.userId === user.userId)) {
-          this.selectedChat.participants.push(user);
-        }
-      }
-
-      // Rimuovi utenti (se implementato)
-      const removedIds = removed.map(u => u.userId);
-      this.selectedChat.participants = this.selectedChat.participants.filter(
-        p => !removedIds.includes(p.userId)
-      );
+      this.$emit("update-members", { added, removed });
     },
     handleLeaveGroup(chatId) {
       this.$emit("left-group", chatId);
@@ -195,6 +221,15 @@ export default {
       } catch (e) {
         console.error("Errore eliminazione:", e);
       }
+    },
+    handleMessageReactionUpdate({ messageId, reaction }) {
+      const updatedMessages = this.messages.map(msg => {
+        if (msg.messageId === messageId) {
+          return { ...msg, reaction };
+        }
+        return msg;
+      });
+      this.messages = updatedMessages;
     }
 
     }
@@ -221,6 +256,8 @@ export default {
       @chat-deleted="handleChatDeleted"
       @close="handleCloseMemberManager"
       @left-group="handleLeaveGroup"
+      @update-chat-name="$emit('update-chat-name', $event)"
+      @update-chat-photo="$emit('update-chat-photo', $event)"
     />
 
     <div class="chat-body" ref="chatBody">
@@ -236,8 +273,18 @@ export default {
         :chat="selectedChat"
         @reload-messages="loadMessages"
         @delete="deleteMessage"
+        @reply="replyMessage = $event"
+        @update-message-reaction="handleMessageReactionUpdate"
       />
       
+    </div>
+
+    <div v-if="replyMessage" class="reply-preview">
+      <div class="reply-header">
+        Rispondi a:
+        <button class="close-reply" @click="replyMessage = null">✕</button>
+      </div>
+      <div class="reply-content">{{ replyMessage.content }}</div>
     </div>
 
     <div class="chat-footer" v-if="selectedChat">
@@ -264,7 +311,7 @@ export default {
   display: flex;
   flex-direction: column;
   flex-grow: 1;
-  height: 100%;
+  height: 100vh;
   background-color: rgb(220, 212, 248);
   overflow: hidden;
 }
@@ -321,8 +368,6 @@ export default {
   overflow-y: auto;
   background-color: whitesmoke;
   display: flex;
-  justify-content: flex-end;
-  align-items: center;
   padding: 1rem;
 }
 
@@ -379,4 +424,30 @@ export default {
 .send-button:hover svg {
   transform: scale(1.25);
 }
+
+.reply-preview {
+  background-color: rgba(0, 0, 128, 0.32);
+  padding: 0.5rem;
+  border-left: 3px solid navy;
+  margin: 0 auto;
+  width: 95%;
+  display: flex;
+  flex-direction: column;
+  border-radius: 0.4rem;
+}
+.reply-header {
+  display: flex;
+  justify-content: space-between;
+}
+.close-reply {
+  background: none;
+  border: none;
+  font-size: 1rem;
+  cursor: pointer;
+}
+.reply-content {
+  font-style: italic;
+  color: black;
+}
+
 </style>

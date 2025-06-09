@@ -82,7 +82,7 @@ export default {
       try {
         const response = await axiosInstance.post(`/chats/${this.chat.chatId}/messages/${this.message.messageId}/reactions`, { reaction });
 
-        this.message.reaction = reaction;
+        this.$emit("update-message-reaction", {messageId: this.message.messageId, reaction});
         this.emojiPickerVisible = false;
         this.showMenu = false;
         this.$emit("reload-messages")
@@ -139,6 +139,16 @@ export default {
 
         <!-- Messaggio -->
         <div class="message-content">
+          <div v-if="message.replyTo && message.replyTo.content" class="reply-preview-in-message">
+            <div class="reply-header-in-message">
+              <strong>
+                {{ message.replyTo.senderName === loggedUser.name ? 'Tu' : message.replyTo.senderName || 'Utente' }}
+              </strong>
+            </div>
+            <div class="reply-content-in-message">
+              {{ message.replyTo.content }}
+            </div>
+          </div>
           <p class="message-text">{{ message.content }}</p>
           <span class="message-timestamp">{{ formattedTimestamp }}</span>
         </div>
@@ -425,6 +435,27 @@ export default {
 
 .remove-reaction-btn:hover {
   color: red;
+}
+
+.reply-preview-in-message {
+  background-color: rgba(0, 0, 128, 0.08);
+  border-left: 3px solid #00bfa5;
+  padding: 0.4rem 0.6rem;
+  margin-bottom: 4px;
+  border-radius: 6px;
+}
+
+.reply-header-in-message {
+  font-weight: bold;
+  font-size: 0.9em;
+  margin-bottom: 2px;
+  color: #333;
+}
+
+.reply-content-in-message {
+  font-style: italic;
+  color: #555;
+  font-size: 0.85em;
 }
 
 </style>

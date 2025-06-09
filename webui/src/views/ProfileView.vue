@@ -77,7 +77,6 @@ export default {
       const reader = new FileReader();
       reader.onload = () => {
         const base64String = reader.result.split(',')[1]; // Rimuove "data:image/png;base64,"
-        this.loggedUser.photo = base64String;
         this.uploadPhoto(base64String);
       };
       reader.readAsDataURL(file);
