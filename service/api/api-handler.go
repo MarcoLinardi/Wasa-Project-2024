@@ -23,12 +23,12 @@ func (rt *_router) Handler() http.Handler {
 
 	// Message Operations
 	rt.router.POST("/chats/:chatId/messages", rt.wrap(rt.bearerAuth(rt.sendMessage)))                           // testato + frontend (manca invio foto)
-	rt.router.DELETE("/chats/:chatId/messages/:messageId", rt.wrap(rt.bearerAuth(rt.deleteMessage)))            // testato
+	rt.router.DELETE("/chats/:chatId/messages/:messageId", rt.wrap(rt.bearerAuth(rt.deleteMessage)))            // testato + frontend
 	rt.router.GET("/chats/:chatId/messages", rt.wrap(rt.bearerAuth(rt.getAllMessages)))                         // testato + frontend
 	rt.router.PUT("/chats/:chatId/messages/status", rt.wrap(rt.bearerAuth(rt.updateMessagesStatus)))            // testato
 	rt.router.POST("/chats/:chatId/messages/:messageId/forward", rt.wrap(rt.bearerAuth(rt.forwardMessage)))     // testato
-	rt.router.POST("/chats/:chatId/messages/:messageId/reactions", rt.wrap(rt.bearerAuth(rt.reactToMessage)))   // testato
-	rt.router.DELETE("/chats/:chatId/messages/:messageId/reactions", rt.wrap(rt.bearerAuth(rt.deleteReaction))) // testato
+	rt.router.POST("/chats/:chatId/messages/:messageId/reactions", rt.wrap(rt.bearerAuth(rt.reactToMessage)))   // testato + frontend
+	rt.router.DELETE("/chats/:chatId/messages/:messageId/reactions", rt.wrap(rt.bearerAuth(rt.deleteReaction))) // testato + frontend
 
 	// Group Operations
 	rt.router.POST("/chats/:chatId/members", rt.wrap(rt.bearerAuth(rt.addMemberToGroup)))      // testato + frontend

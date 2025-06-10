@@ -9,6 +9,7 @@ export default {
       chats: [],
       chatName: "",
       selectedChat: null,
+      pollingInterval: null,
     }
   },
   components: {
@@ -18,6 +19,13 @@ export default {
   mounted() {
     this.loadChats();
     this.loadLoggedUser();
+
+    // Polling ogni 2 secondi
+    this.pollingInterval = setInterval(() => {
+      this.loadChats();
+      this.loadLoggedUser();
+    }, 2000);
+
     this.$watch(
       () => this.chats,
       (newChats) => {
@@ -31,6 +39,9 @@ export default {
       },
       { immediate: true }
     );
+  },
+  beforeUnmount() {
+    clearInterval(this.pollingInterval);
   },
   computed: {
     filteredChats() {
@@ -66,7 +77,6 @@ export default {
       const userData = localStorage.getItem('user');
       if (userData) {
         this.loggedUser = JSON.parse(userData);
-        console.log("Utente loggato caricato:", this.loggedUser);
       } else {
         console.warn("Nessun utente trovato in localStorage");
       }

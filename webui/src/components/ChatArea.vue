@@ -25,20 +25,30 @@ export default {
       users: [],
       showInfo: false,
       replyMessage: null,
+      pollingInterval: null
     };
   },
   mounted() {
     this.loadUsers()
   },
+  beforeUnmount() {
+    clearInterval(this.pollingInterval);
+  },
+
   watch: {
     selectedChat: {
       async handler(newChat, oldChat) {
+        clearInterval(this.pollingInterval);
         if (newChat && newChat.chatId && (!oldChat || newChat.chatId !== oldChat.chatId)) {
           // Aspetta finché gli utenti non sono stati caricati
           while (this.users.length === 0) {
             await new Promise(resolve => setTimeout(resolve, 100)); // aspetta 100ms
           }
           await this.loadMessages();
+          // Avvia polling per i messaggi della nuova chat
+          this.pollingInterval = setInterval(() => {
+            this.loadMessages();
+          }, 2000);
         } else if (!newChat) {
           this.messages = [];
         }

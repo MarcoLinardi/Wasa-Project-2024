@@ -11,11 +11,13 @@ export default {
       editedName: '',
       isEditingName: false,
       isEditingPhoto: false,
-      editedPhoto: ''
+      editedPhoto: '',
+      users: []
     };
   },
   mounted() {
     this.loadLoggedUser();
+    this.loadUsers();
   },
   methods: {
     loadLoggedUser() {
@@ -29,6 +31,17 @@ export default {
         }
       } else {
         console.warn("Nessun utente trovato in localStorage");
+      }
+    },
+    async loadUsers() {
+      try {
+        const response = await axiosInstance.get("/users");
+        this.users = response.data.users || response.data;
+        this.users.sort((a, b) => (a.name || "").localeCompare(b.name || ""));
+        console.log("Utenti caricati:", this.users);
+      } catch (e) {
+        console.error("[loadUsers] Errore nel caricamento degli utenti:", e);
+        this.users = [];
       }
     },
 
@@ -48,6 +61,19 @@ export default {
     },
 
     async saveName() {
+       // Rimuove spazi e confronta in minuscolo
+      const newName = this.editedName.trim().toLowerCase();
+
+      // Controlla se il nuovo nome è già utilizzato da un altro utente (diverso dall'utente loggato)
+      const nameExists = this.users.some(user => 
+        user.name?.trim().toLowerCase() === newName &&
+        user.userId !== this.loggedUser.userId // Assumendo che esista una proprietà 'id' per identificare l'utente
+      );
+
+      if (nameExists) {
+        alert("Il nome inserito è già in uso da un altro utente.");
+        return;
+      }
       try {
         const response = await axiosInstance.put('/user/name', {
           newName: this.editedName

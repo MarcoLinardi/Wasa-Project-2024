@@ -11,6 +11,7 @@ import NewChat from './components/NewChat.vue';
 import Message from './components/Message.vue';
 import ChatInfo from './components/ChatInfo.vue';
 import ManageMember from './components/ManageMember.vue';
+import ForwardModal from './components/ForwardModal.vue';
 
 import './assets/dashboard.css'
 import './assets/main.css'
@@ -27,5 +28,6 @@ app.component("ChatInfo", ChatInfo)
 app.component("ManageMember", ManageMember)
 app.component("NewChat", NewChat)
 app.component("Message", Message)
+app.component("ForwardModal", ForwardModal)
 app.use(router)
 app.mount('#app')

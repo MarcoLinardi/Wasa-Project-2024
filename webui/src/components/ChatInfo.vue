@@ -9,7 +9,7 @@ export default {
       isEditingName: false,
       editedName: '',
       editedPhoto: '',
-      isManagingMembers: false
+      isManagingMembers: false,
     };
   },
   props: {

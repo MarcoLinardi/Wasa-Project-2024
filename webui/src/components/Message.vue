@@ -1,12 +1,15 @@
 <script>
 import axiosInstance from "@/services/axios";
+import ForwardModal from "./ForwardModal.vue";
 export default {
+  emits: ['reloadMessages', 'delete', 'reply', 'updateMessageReaction'],
   data() {
     return {
       showMenu: false,
       emojiPickerVisible: false,
       reaction: null,
       showReactionInfo: false,
+      showForwardModal: false,
       users: []
     };
   },
@@ -68,8 +71,8 @@ export default {
       this.showMenu = false;
     },
     onForward() {
-      this.$emit("forward", this.message);
       this.showMenu = false;
+      this.showForwardModal = true;
     },
     onDelete() {
       this.$emit("delete", this.message);
@@ -128,7 +131,7 @@ export default {
 
 <template>
   <div class="message-wrapper" :class="{ 'sent-wrapper': isSentByLoggedUser, 'received-wrapper': !isSentByLoggedUser }">
-   <div class="message-item" :class="{ 'sent': isSentByLoggedUser, 'received': !isSentByLoggedUser }">
+    <div class="message-item" :class="{ 'sent': isSentByLoggedUser, 'received': !isSentByLoggedUser }">
       <!-- Wrapper: messaggio + menu -->
       <div class="message-body-wrapper" :class="{ 'sent-align': isSentByLoggedUser, 'received-align': !isSentByLoggedUser }">
         
@@ -139,6 +142,11 @@ export default {
 
         <!-- Messaggio -->
         <div class="message-content">
+          <!-- Se il messaggio è inoltrato -->
+          <div v-if="message.isForwarded" class="forwarded-info">
+            <span class="forwarded-icon">↪</span>
+            <span class="forwarded-label">Inoltrato</span>
+          </div>
           <div v-if="message.replyTo && message.replyTo.content" class="reply-preview-in-message">
             <div class="reply-header-in-message">
               <strong>
@@ -201,6 +209,13 @@ export default {
 
     </div>
   </div>
+  <ForwardModal
+    v-if="showForwardModal"
+    :message="message"
+    :original-chat-id="chat.chatId"
+    @close="showForwardModal = false"
+  />
+
 </template>
 
 <style scoped>
@@ -456,6 +471,23 @@ export default {
   font-style: italic;
   color: #555;
   font-size: 0.85em;
+}
+
+.forwarded-info {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.85rem;
+  color: #444;
+  margin-bottom: 4px;
+}
+
+.forwarded-icon {
+  font-size: 1rem;
+}
+
+.forwarded-label {
+  font-style: italic;
 }
 
 </style>
