@@ -1,0 +1,24 @@
+# Fase 1: build Go
+FROM golang:1.19.1 AS builder
+
+# Crea una directory nel container
+WORKDIR /src/
+
+# Copia tutto il progetto nel container
+COPY . .
+
+# Compila il backend
+RUN go build -o /app/webapi ./cmd/webapi
+
+# Fase 2: container finale minimal
+FROM debian:bookworm
+
+EXPOSE 3000
+WORKDIR /app/
+
+# Copia solo l'eseguibile dal container precedente
+COPY --from=builder /app/webapi ./
+
+# Avvia il backend
+CMD ["/app/webapi"]
+

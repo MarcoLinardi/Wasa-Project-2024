@@ -90,13 +90,14 @@ export default {
 }
 
 .modal-content {
-  background-color: #ffffff;
+  background-color: #c7c6e4;
   padding: 2rem;
-  border-radius: 12px;
+  border-radius: 1rem;
   width: 90%;
   max-width: 400px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
   text-align: center;
+  border: 0.3rem solid navy;
 }
 
 .modal-content h3 {
@@ -119,13 +120,14 @@ export default {
 
 .chat-list li {
   padding: 0.75rem 1rem;
-  border-bottom: 1px solid #eeeeee;
+  border-radius: 0.5rem;
+  border-bottom: 1px solid navy;
   cursor: pointer;
   transition: background-color 0.2s ease;
 }
 
 .chat-list li:hover {
-  background-color: #f0f0f0;
+  background-color: rgba(0, 0, 128, 0.208);
 }
 
 button {

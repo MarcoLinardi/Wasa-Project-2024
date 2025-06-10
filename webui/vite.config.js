@@ -9,6 +9,7 @@ export default defineConfig(({command, mode, ssrBuild}) => {
 	const ret = {
 		plugins: [vue()],
 		server: {
+			host: '0.0.0.0',
 			watch: {
 				usePolling: true
 			}

@@ -4,6 +4,7 @@ import (
 	"Wasa-Project-2024/service/api/reqcontext"
 	"Wasa-Project-2024/service/database"
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"strconv"
@@ -27,6 +28,11 @@ func (rt *_router) sendMessage(w http.ResponseWriter, r *http.Request, ps httpro
 	if err := json.NewDecoder(r.Body).Decode(&msg); err != nil {
 		http.Error(w, `{"error": "Invalid request body"}`, http.StatusBadRequest)
 		return
+	}
+	if msg.Photo != nil {
+		fmt.Println("Ricevuto photo:", len(*msg.Photo), "bytes")
+	} else {
+		fmt.Println("Nessuna photo ricevuta")
 	}
 
 	msg.SenderID = ctx.UserID

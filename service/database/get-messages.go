@@ -4,7 +4,7 @@ import "fmt"
 
 func (db *appdbimpl) GetAllMessages(chatID int) ([]Message, error) {
 	rows, err := db.c.Query(`
-		SELECT messageId, senderId, content, timestamp, status, isForwarded, replyToId
+		SELECT messageId, senderId, content, photo, timestamp, status, isForwarded, replyToId
 		FROM messages
 		WHERE chatId = ?
 		ORDER BY timestamp ASC
@@ -17,7 +17,7 @@ func (db *appdbimpl) GetAllMessages(chatID int) ([]Message, error) {
 	var messages []Message
 	for rows.Next() {
 		var msg Message
-		if err := rows.Scan(&msg.MessageID, &msg.SenderID, &msg.Content, &msg.Timestamp, &msg.Status, &msg.IsForwarded, &msg.ReplyToID); err != nil {
+		if err := rows.Scan(&msg.MessageID, &msg.SenderID, &msg.Content, &msg.Photo, &msg.Timestamp, &msg.Status, &msg.IsForwarded, &msg.ReplyToID); err != nil {
 			return nil, fmt.Errorf("error scanning message: %w", err)
 		}
 
@@ -29,7 +29,6 @@ func (db *appdbimpl) GetAllMessages(chatID int) ([]Message, error) {
 		if err != nil {
 			return nil, fmt.Errorf("error retrieving reactions: %w", err)
 		}
-
 		var reactions []Reaction
 		for reactionRows.Next() {
 			var reaction Reaction
@@ -42,19 +41,15 @@ func (db *appdbimpl) GetAllMessages(chatID int) ([]Message, error) {
 			reactions = append(reactions, reaction)
 		}
 		reactionRows.Close()
-
 		// Verifica se ci sono errori durante l'iterazione
 		if err := reactionRows.Err(); err != nil {
 			return nil, fmt.Errorf("error iterating reactions: %w", err)
 		}
-
 		msg.Reactions = reactions
 		messages = append(messages, msg)
 	}
-
 	if err := rows.Err(); err != nil {
 		return nil, fmt.Errorf("error iterating messages: %w", err)
 	}
-
 	return messages, nil
 }

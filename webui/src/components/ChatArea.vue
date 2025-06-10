@@ -21,6 +21,7 @@ export default {
   data() {
     return {
       messageText: "",
+      photoBase64: null,
       messages: [],
       users: [],
       showInfo: false,
@@ -187,17 +188,20 @@ export default {
       }
     },
     async handleSend() {
-      if (!this.messageText.trim() || !this.selectedChat || !this.selectedChat.chatId) {
+      if ((!this.messageText.trim() && !this.photoBase64) || !this.selectedChat || !this.selectedChat.chatId) {
         console.warn("Nessun messaggio da inviare o nessuna chat selezionata.");
         return;
       }
+
       const textContentForMessage = this.messageText.trim();
+      const chatId = this.selectedChat.chatId;
+
       const messagePayload = {
         senderId: this.loggedUser.userId,
-        content: textContentForMessage,
-        ...(this.replyMessage && { replyToId: this.replyMessage.messageId })
+        ...(textContentForMessage && { content: textContentForMessage }),
+        ...(this.replyMessage && { replyToId: this.replyMessage.messageId }),
+        ...(this.photoBase64 && { photo: this.photoBase64 })
       };
-      const chatId = this.selectedChat.chatId;
 
       try {
         const response = await axiosInstance.post(`/chats/${chatId}/messages`, messagePayload);
@@ -205,13 +209,14 @@ export default {
         if (response.data) {
           const newMessage = {
             messageId: response.data.id || Date.now(),
-            content: textContentForMessage,
+            content: textContentForMessage || null,
+            photo: this.photoBase64 || null,
             senderId: messagePayload.senderId,
             timestamp: response.data.timestamp || new Date().toISOString(),
             ...(this.replyMessage && { replyToId: this.replyMessage })
           };
 
-          if (typeof newMessage.content !== 'string' || newMessage.content.trim() === '') {
+          if (!newMessage.content && !newMessage.photo) {
             this.loadMessages();
           } else {
             this.messages.push(newMessage);
@@ -222,17 +227,31 @@ export default {
               }
             });
           }
+
           this.$emit('message-sent', { chatId, newMessage });
         } else {
           this.loadMessages();
         }
+
         this.messageText = "";
+        this.photoBase64 = null;
         this.replyMessage = null;
         this.loadMessages();
-        
+
       } catch (e) {
         console.error('[handleSend] Errore durante invio del messaggio:', e);
       }
+    },
+
+    handlePhotoSelect(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = () => {
+        this.photoBase64 = reader.result;
+      };
+      reader.readAsDataURL(file);
     },
     handleChatDeleted(chatId) {
       this.showInfo = false;
@@ -262,7 +281,11 @@ export default {
         return msg;
       });
       this.messages = updatedMessages;
+    },
+    removePhoto() {
+      this.photoBase64 = null;
     }
+
 
     }
   }
@@ -320,16 +343,31 @@ export default {
     </div>
 
     <div class="chat-footer" v-if="selectedChat">
+      <!-- Anteprima immagine selezionata -->
+      <div v-if="photoBase64" class="image-preview">
+        <img :src="photoBase64" alt="Anteprima immagine" />
+        <button @click="removePhoto" class="remove-photo-button">✕</button>
+      </div>
+
       <div class="input-container">
         <input
           v-model="messageText"
           placeholder="Scrivi un messaggio..."
           @keyup.enter="handleSend"
         />
-        <button class="send-button" title="Scegli foto">
+        <!-- input nascosto per la selezione immagine -->
+        <input
+          type="file"
+          ref="photoInput"
+          accept="image/*"
+          style="display: none"
+          @change="handlePhotoSelect"
+        />
+
+        <button class="send-button" title="Scegli foto" @click.prevent="$refs.photoInput.click()">
           <svg class="feather"><use href="/feather-sprite-v4.29.0.svg#image"/></svg>
         </button>
-        <button class="send-button" title="Invia" @click="handleSend" :disabled="!messageText.trim()">
+        <button class="send-button" title="Invia" @click="handleSend" :disabled="!messageText.trim() && !photoBase64">
           <svg class="feather"><use href="/feather-sprite-v4.29.0.svg#send"/></svg>
         </button>
       </div>
@@ -481,5 +519,45 @@ export default {
   font-style: italic;
   color: black;
 }
+
+.image-preview {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 8px 0 4px 0;
+  padding: 6px 10px;
+  background-color: rgba(255, 255, 255, 0.9);
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  max-width: 300px;
+  position: relative;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.image-preview img {
+  max-width: 80px;
+  max-height: 80px;
+  object-fit: cover;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+}
+
+.remove-photo-button {
+  background: #e74c3c;
+  border: none;
+  color: white;
+  font-weight: bold;
+  font-size: 12px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.2s;
+  margin-left: auto;
+}
+
+.remove-photo-button:hover {
+  background: #c0392b;
+}
+
 
 </style>

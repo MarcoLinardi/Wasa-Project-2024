@@ -207,7 +207,7 @@ export default {
   height: 90vh;
   margin: 40px auto;
   background-color: whitesmoke;
-  border-radius: 12px;
+  border-radius: 1rem;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
   display: flex;
   flex-direction: row;
@@ -218,7 +218,7 @@ export default {
 /* Sidebar */
 .sidebar-wrapper {
   width: 30%;
-  height: 100vh;
+  height: 100%;
   background-color: #c7c6e4;
   color: white;
   padding: 1rem;
@@ -261,8 +261,9 @@ export default {
 
 .chat-list{
   overflow-y: auto;
-  max-height: calc(100vh - 200px);
   flex-grow: 1;
+  padding-bottom: 1rem;
+  padding-right: 5px;
 }
 
 .chat-item {

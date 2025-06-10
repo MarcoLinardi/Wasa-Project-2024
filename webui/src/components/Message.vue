@@ -143,10 +143,6 @@ export default {
 
         <!-- Messaggio -->
         <div class="message-content">
-          <template v-if="message.messageId === 20">
-            {{ console.log('Message 20: isSentByLoggedUser =', isSentByLoggedUser) }}
-            {{ console.log('Message 20: message.status =', message.status) }}
-        </template>
           <!-- Se il messaggio è inoltrato -->
           <div v-if="message.isForwarded" class="forwarded-info">
             <span class="forwarded-icon">↪</span>
@@ -162,7 +158,21 @@ export default {
               {{ message.replyTo.content }}
             </div>
           </div>
-          <p class="message-text">{{ message.content }}</p>
+          <!-- Contenuto del messaggio -->
+          <div class="message-media-wrapper">
+            <!-- Immagine se presente -->
+            <img
+              v-if="message.photo"
+              :src="message.photo"
+              alt="immagine"
+              class="message-photo"
+            />
+
+            <!-- Testo se presente -->
+            <p v-if="message.content" class="message-text">
+              {{ message.content }}
+            </p>
+          </div>
           <span class="message-timestamp">{{ formattedTimestamp }}
             <span v-if="isSentByLoggedUser" class="message-status-icon">
               <!-- ✓ inviato -->
@@ -520,5 +530,24 @@ export default {
   font-weight: bold;
   stroke-width: 4;
 }
+
+.message-media-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-width: 250px;
+  word-break: break-word;
+}
+
+.message-photo {
+  max-width: 220px;
+  max-height: 300px;
+  width: auto;
+  height: auto;
+  border-radius: 10px;
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.15);
+  object-fit: contain;
+}
+
 
 </style>
