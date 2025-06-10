@@ -33,6 +33,7 @@ export default {
   },
   computed: {
     isSentByLoggedUser() {
+      console.log("Logged User ID:", this.loggedUser.userId);
       return this.message.senderId === this.loggedUser.userId;
     },
     formattedTimestamp() {
@@ -142,6 +143,10 @@ export default {
 
         <!-- Messaggio -->
         <div class="message-content">
+          <template v-if="message.messageId === 20">
+            {{ console.log('Message 20: isSentByLoggedUser =', isSentByLoggedUser) }}
+            {{ console.log('Message 20: message.status =', message.status) }}
+        </template>
           <!-- Se il messaggio è inoltrato -->
           <div v-if="message.isForwarded" class="forwarded-info">
             <span class="forwarded-icon">↪</span>
@@ -158,7 +163,19 @@ export default {
             </div>
           </div>
           <p class="message-text">{{ message.content }}</p>
-          <span class="message-timestamp">{{ formattedTimestamp }}</span>
+          <span class="message-timestamp">{{ formattedTimestamp }}
+            <span v-if="isSentByLoggedUser" class="message-status-icon">
+              <!-- ✓ inviato -->
+              <svg v-if="message.status === 'sent'" class="feather grey">
+                <use href="/feather-sprite-v4.29.0.svg#check" />
+              </svg>
+              <!-- ✓✓ letto -->
+              <svg v-if="message.status === 'read'" stroke-width="4" class="feather blue">
+                <use href="/feather-sprite-v4.29.0.svg#check" />
+              </svg>
+
+            </span>
+          </span>
         </div>
 
         <!-- Reaction -->
@@ -488,6 +505,20 @@ export default {
 
 .forwarded-label {
   font-style: italic;
+}
+
+.message-status-icon {
+  margin-left: 6px;
+  display: inline-flex;
+  vertical-align: middle;
+}
+.feather.grey {
+  color: rgb(83, 83, 83);
+}
+.feather.blue {
+  color: navy; /* WhatsApp blue */
+  font-weight: bold;
+  stroke-width: 4;
 }
 
 </style>

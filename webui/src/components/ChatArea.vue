@@ -30,6 +30,7 @@ export default {
   },
   mounted() {
     this.loadUsers()
+    this.loadMessages()
   },
   beforeUnmount() {
     clearInterval(this.pollingInterval);
@@ -45,6 +46,8 @@ export default {
             await new Promise(resolve => setTimeout(resolve, 100)); // aspetta 100ms
           }
           await this.loadMessages();
+          this.markMessagesAsRead();
+
           // Avvia polling per i messaggi della nuova chat
           this.pollingInterval = setInterval(() => {
             this.loadMessages();
@@ -128,15 +131,12 @@ export default {
       try {
         const response = await axiosInstance.get(`/chats/${this.selectedChat.chatId}/messages`);
         const rawMessages = response.data || [];
+        console.log("messaggi caricati: ", this.messages)
         // Risolvi i replyTo
         this.messages = rawMessages.map(msg => {
           if (msg.replyToId) {
             const repliedTo = rawMessages.find(m => m.messageId === msg.replyToId);
             if (repliedTo) {
-              console.log("Replied message trovato:", repliedTo);
-              console.log("Sender ID da cercare:", repliedTo.senderId);
-              console.log("Lista utenti:", this.users);
-              console.log("Nome trovato:", this.getUserNameById?.(repliedTo.senderId));
               msg.replyTo = {
                 content: repliedTo.content,
                 senderName: this.getUserNameById?.(repliedTo.senderId) || "Utente"
@@ -149,6 +149,28 @@ export default {
         console.error("[loadMessages] Errore nel caricamento dei messaggi:", e);
       }
     },
+    async markMessagesAsRead() {
+      const unreadMessages = this.messages.filter(m =>
+        m.senderId !== this.loggedUser.userId && m.status !== "read"
+      );
+
+      if (unreadMessages.length === 0) return;
+
+      const messageIds = unreadMessages.map(m => m.messageId);
+      try {
+        await axiosInstance.put(`/chats/${this.selectedChat.chatId}/messages/status`, {
+          messageIds,
+          newStatus: "read"
+        });
+
+        // Ricarica i messaggi per vedere subito le spunte blu
+        this.loadMessages();
+
+      } catch (err) {
+        console.error("Errore nell'aggiornamento dello stato dei messaggi:", err);
+      }
+    },
+
     getUserNameById(userId) {
       const user = this.users?.find(u => u.userId === userId);
       return user?.name || "Utente";
