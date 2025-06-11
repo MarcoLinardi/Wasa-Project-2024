@@ -38,7 +38,13 @@ func (rt *_router) sendMessage(w http.ResponseWriter, r *http.Request, ps httpro
 	msg.SenderID = ctx.UserID
 
 	// Aggiungi automaticamente il timestamp
-	msg.Timestamp = time.Now().Format("2006-01-02 15:04:05")
+	loc, err := time.LoadLocation("Europe/Rome")
+	if err != nil {
+		fmt.Printf("Warning: Could not load timezone Europe/Rome: %v. Using UTC as fallback.\n", err)
+		loc = time.UTC // Fallback a UTC se non riesce a caricare "Europe/Rome"
+	}
+	currentTime := time.Now().In(loc)
+	msg.Timestamp = currentTime.Format("2006-01-02 15:04:05")
 
 	// Salva il messaggio nel database
 	messageID, err := rt.db.SaveMessage(chatID, msg)
