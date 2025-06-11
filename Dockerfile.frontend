@@ -1,45 +1,24 @@
-# Fase 1: Build dell'applicazione frontend (Vite con Yarn)
-# Usiamo l'immagine Node.js LTS (Long Term Support).
+# Fase 1: build Vue con Yarn
 FROM node:lts AS builder
 
-# Imposta la directory di lavoro all'interno del container.
-WORKDIR /app/webui
+# Crea directory di lavoro nel container
+WORKDIR /app
 
-# Abilita Corepack. Questo è fondamentale per gestire la versione di Yarn (v4) specificata nel tuo package.json.
-RUN corepack enable
+# Copia solo i file di configurazione e dipendenze
+COPY webui/package.json webui/yarn.lock ./
 
-# Copia i file di configurazione del progetto per le dipendenze.
-COPY webui/package.json ./
-COPY webui/yarn.lock ./
+# Abilita corepack per supportare yarn moderno
+RUN corepack enable && yarn install
 
-# Installa le dipendenze usando yarn.
-# Ho rimosso --immutable qui perché i tuoi script di build già gestiscono l'installazione/cache.
-# Questo passo assicura che le dipendenze base siano disponibili prima della build.
-RUN yarn install
-
-# Copia il resto del codice sorgente del frontend.
+# Copia tutto il progetto Vue (dalla sottocartella)
 COPY webui/ .
 
-# Esegui la build dell'applicazione frontend con Vite usando lo script 'build-prod'.
-# Questo script si occuperà anche di installare le dipendenze con --immutable-cache.
-RUN yarn run build-prod
+# Costruisci il frontend per produzione
+RUN yarn build-prod
 
-# Fase 2: Container finale per servire i file statici con Nginx
+# Fase 2: usa Nginx per servire l'app
 FROM nginx:stable
 
-# Rimuovi la configurazione predefinita di Nginx per sostituirla con la nostra.
-RUN rm /etc/nginx/conf.d/default.conf
+# Copia la build finale nel path di Nginx
+COPY --from=builder /app/dist /usr/share/nginx/html
 
-# Copia la configurazione personalizzata di Nginx.
-# Assicurati che il file 'nginx.conf' si trovi nella tua cartella radice (~/Wasa-project-2024).
-COPY nginx.conf /etc/nginx/conf.d/default.conf
-
-# Copia i file statici costruiti dalla fase di 'builder' nella directory servita da Nginx.
-# Vite genera i file statici nella cartella 'dist' all'interno della WORKDIR (/app/webui).
-COPY --from=builder /app/webui/dist /usr/share/nginx/html
-
-# Espone la porta 80.
-EXPOSE 80
-
-# Nginx ha già un CMD predefinito.
-# CMD ["nginx", "-g", "daemon off;"]

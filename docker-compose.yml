@@ -1,52 +1,17 @@
-version: '3.8' # La versione della sintassi di Docker Compose
+version: '3'
 
 services:
   backend:
     build:
-      context: . # Il contesto di build è la directory corrente (dove si trova docker-compose.yml)
-      dockerfile: Dockerfile.backend # Specifica quale Dockerfile usare
+      context: .
+      dockerfile: Dockerfile.backend
     ports:
-      - "3000:3000" # Mappa la porta 3000 del backend sul tuo host alla porta 3000 del container
-    networks:
-      - wasa-network # Collega il backend alla rete comune
-    volumes:
-      - backend_data:/data # Mappa un volume per i dati del backend (es. database)
-    environment:
-      # Qui puoi definire variabili d'ambiente per il backend, ad esempio il DB URL
-      # Esempio:
-      # DB_URL: "file:/data/wasa.db"
-      # Assicurati che il tuo codice Go utilizzi questa variabile d'ambiente per il percorso del DB
-      # Se il tuo backend non usa un DB o non lo salva in /data, puoi rimuovere la sezione volumes e environment se non usate.
-      # Adatta questa parte se il tuo backend ha bisogno di altre variabili d'ambiente.
-      # Se il tuo backend non necessita di queste variabili, puoi lasciarle o commentarle/rimuoverle
-      # a seconda del tuo codice Go.
-      # Ad esempio, se il tuo codice Go usa un percorso hardcoded per il DB, questo non è necessario.
-      # Se il tuo DB è un file, questo è il modo per persisterlo.
-      DATABASE_FILE: "/data/wasa.db" # Variabile d'ambiente che il tuo backend Go potrebbe leggere
+      - "3000:3000"
 
   frontend:
     build:
-      context: . # Il contesto di build è la directory corrente
-      dockerfile: Dockerfile.frontend # Specifica quale Dockerfile usare
+      context: .
+      dockerfile: Dockerfile.frontend
     ports:
-      - "8080:80" # Mappa la porta 8080 del tuo host alla porta 80 del container Nginx
-    networks:
-      - wasa-network # Collega il frontend alla rete comune
-    depends_on:
-      - backend # Assicura che il backend sia avviato prima del frontend
-    # environment:
-    #   # Se il tuo frontend deve conoscere l'URL del backend, definiscilo qui.
-    #   # All'interno del container 'frontend', 'backend' risolve all'IP del container 'backend'.
-    #   VUE_APP_API_URL: "http://backend:3000"
-    #   # Se stai usando Vite e il tuo frontend deve conoscere l'API URL,
-    #   # la variabile d'ambiente dovrà seguire il prefisso di Vite (es. VITE_APP_API_URL)
-    #   # o il prefisso del tuo framework. Adatta questo al tuo frontend.
-    #   # Se il tuo frontend gestisce il suo API URL in altro modo (es. hardcoded 'localhost'), potresti non averne bisogno.
-    #   # Se il tuo frontend è una SPA e fai chiamate API relative (es. /api/users),
-    #   # puoi configurare Nginx per proxyare le richieste al backend (vedi nota sotto).
+      - "8080:80"
 
-networks:
-  wasa-network: # Definisce una rete Docker interna per far comunicare i servizi tra loro
-
-volumes:
-  backend_data: # Definisce un volume per persistere i dati del backend
